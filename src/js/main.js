@@ -88,7 +88,7 @@ async function start() {
       mode: settings.averaging,
       onLevel,
       onSpectrum: (live, avg) => spectrum.onSpectrum(live, avg),
-      onAverage: (db) => spectrum.onAverage(db),
+      onAverage: (db, current) => spectrum.onAverage(db, current),
       onPcm: (pcm) => recording?.writer.write(pcm).catch(recordingFailed),
       onRecordEnd: finishRecording,
       onEnded: () => stop('Das Mikrofon wurde getrennt.'),
@@ -246,9 +246,8 @@ function loop(now) {
       level.draw(stats, settings);
       levelDirty = false;
     }
-  } else if (settings.view === 'spectrum') {
-    spectrum.frame(now, settings);
   }
+  spectrum.frame(now, settings);
   if (recording && now - status.at > 250) status(now);
 }
 
@@ -320,6 +319,21 @@ $('settings').addEventListener('click', (e) => {
   if (e.target === $('settings')) $('settings').close();
 });
 
+// No zooming, like a native app. iOS ignores user-scalable=no in the viewport
+// tag, so pinch gestures, two-finger moves and double taps are stopped here
+// as well (touch-action in the CSS covers the other browsers).
+for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+  document.addEventListener(type, (e) => e.preventDefault());
+}
+document.addEventListener(
+  'touchmove',
+  (e) => {
+    if (e.touches.length > 1) e.preventDefault();
+  },
+  { passive: false },
+);
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
   if (audio && !userPaused && audio.ctx.state !== 'running') audio.ctx.resume().catch(() => {});
@@ -333,6 +347,7 @@ function averagingLabel() {
 // --- Start-up ---
 
 averagingLabel();
+level.labels(settings);
 showView(settings.view);
 setState('idle');
 requestAnimationFrame(loop);

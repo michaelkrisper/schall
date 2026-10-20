@@ -1,0 +1,11 @@
+name: Feature request
+description: An idea for the app
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: What would you like to see, and what would you measure with it?
+    validations:
+      required: true

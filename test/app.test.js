@@ -251,6 +251,19 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     await screenshot('spectrum');
   });
 
+  it('switches the averaging and still finds the tones', async () => {
+    assert.equal(await text('#averaging'), 'Ø 10 s');
+    await click('#averaging');
+    assert.equal(await text('#averaging'), 'Ø gesamt');
+    await click('#averaging');
+    assert.equal(await text('#averaging'), 'Ø 1 s');
+    await sleep(1500);
+    const first = await text('#peak-list li:first-child .hz');
+    near(number(first), 440, 4.4, 'strongest frequency with 1 s averaging');
+    await click('#averaging');
+    assert.equal(await text('#averaging'), 'Ø 10 s');
+  });
+
   it('records, lists and exports a WAV file', async () => {
     await click('#record');
     await waitFor(`document.body.classList.contains('recording')`);
@@ -272,6 +285,25 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     const seconds = file.data / 2 / file.rate;
     assert.ok(seconds > 1.2 && seconds < 2.5, `recorded ${seconds} s`);
     await screenshot('recordings');
+  });
+
+  it('pauses the measurement while a recording plays', async () => {
+    await click('#rec-list [data-act="play"]');
+    await waitFor(`!!document.querySelector('#rec-list .rec.playing audio')`);
+    await waitFor(`document.body.dataset.state === 'paused'`);
+    await click('#rec-list [data-act="play"]');
+    await waitFor(`!document.querySelector('#rec-list audio')`);
+    await waitFor(`document.body.dataset.state === 'running'`);
+  });
+
+  it('deletes a recording only on the second tap', async () => {
+    await click('#rec-list [data-act="delete"]');
+    assert.equal(await evaluate(`document.querySelectorAll('#rec-list .rec').length`), 1);
+    assert.ok(await evaluate(`document.querySelector('[data-act="delete"]').classList.contains('confirm')`));
+    await click('#rec-list [data-act="delete"]');
+    await waitFor(`document.querySelectorAll('#rec-list .rec').length === 0`);
+    assert.equal(await evaluate(`document.getElementById('rec-empty').hidden`), false);
+    assert.equal(await text('#rec-usage'), '');
   });
 
   it('calibrates against a reference reading', async () => {
@@ -296,6 +328,48 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     await click('#toggle');
     await waitFor(`document.body.dataset.state === 'paused'`);
     await click('#toggle');
+    await waitFor(`document.body.dataset.state === 'running'`);
+  });
+
+  it('switches the history range and starts over', async () => {
+    await click('#range');
+    assert.equal(await text('#range'), '10 min');
+    await click('#range');
+    assert.equal(await text('#range'), '60 s');
+    await click('#view-level .reset');
+    await sleep(300);
+    assert.equal(await text('#duration'), '0:00');
+  });
+
+  it('does not zoom, like a native app', async () => {
+    assert.equal(await evaluate(`getComputedStyle(document.documentElement).touchAction`), 'pan-x pan-y');
+    assert.equal(
+      await evaluate(`getComputedStyle(document.getElementById('scope-overlay')).touchAction`),
+      'none',
+    );
+    const prevented = await evaluate(`['gesturestart', 'gesturechange', 'dblclick'].map((type) => {
+      const event = new Event(type, { cancelable: true, bubbles: true });
+      document.body.dispatchEvent(event);
+      return event.defaultPrevented;
+    })`);
+    assert.deepEqual(prevented, [true, true, true]);
+  });
+
+  it('keeps the settings after a reload and starts again by itself', async () => {
+    await click('#weighting');
+    assert.equal(await text('#weighting'), 'dB(C)');
+    await click('#timing');
+    assert.equal(await text('#timing'), 'Slow');
+    await click('.tab[data-view="spectrum"]');
+    await evaluate('window.beforeReload = true');
+    await page('Page.reload');
+    await waitFor(`!window.beforeReload && !!window.schall`);
+    assert.equal(await text('#weighting'), 'dB(C)');
+    assert.equal(await text('#timing'), 'Slow');
+    assert.equal(await text('#leq-name'), 'LCeq');
+    assert.equal(await text('#max-name'), 'LCSmax');
+    assert.equal(await evaluate(`document.getElementById('view-spectrum').hidden`), false);
+    // The microphone is already allowed, so measuring resumes without a tap.
     await waitFor(`document.body.dataset.state === 'running'`);
   });
 

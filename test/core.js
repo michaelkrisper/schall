@@ -7,15 +7,16 @@ import { FFT_SIZE, hopFor, packFilters, REPORT_SECONDS } from '../src/js/dsp.js'
 import { REPORT_LENGTH } from '../src/js/stats.js';
 
 const BYTES = readFileSync(new URL('../src/dsp.wasm', import.meta.url));
-const QUANTUM = 128;
+const MAX_BLOCK = 1024;
 
-export async function loadCore(fs = 48000) {
+/** The core set up for a sample rate; `quantum` is the block size per call (128 in browsers today). */
+export async function loadCore(fs = 48000, { quantum = 128 } = {}) {
   const { instance } = await WebAssembly.instantiate(BYTES);
   const x = instance.exports;
   const view = (Type, ptr, length) => new Type(x.memory.buffer, ptr, length);
   view(Float64Array, x.filters_ptr(), 35).set(packFilters(fs));
   assert.equal(x.setup(fs, FFT_SIZE, hopFor(fs), Math.round(fs * REPORT_SECONDS)), 0);
-  const input = view(Float32Array, x.input_ptr(), QUANTUM);
+  const input = view(Float32Array, x.input_ptr(), MAX_BLOCK);
   const bins = x.bins();
   let t = 0;
   let cols = 0;
@@ -28,10 +29,10 @@ export async function loadCore(fs = 48000) {
     feed(signal, seconds) {
       const reports = [];
       let spectra = 0;
-      const blocks = Math.round((seconds * fs) / QUANTUM);
+      const blocks = Math.round((seconds * fs) / quantum);
       for (let b = 0; b < blocks; b++) {
-        for (let i = 0; i < QUANTUM; i++) input[i] = signal(t++ / fs);
-        const flags = x.process(QUANTUM);
+        for (let i = 0; i < quantum; i++) input[i] = signal(t++ / fs);
+        const flags = x.process(quantum);
         if (flags & 1) reports.push(Float64Array.from(view(Float64Array, x.report_ptr(), REPORT_LENGTH)));
         if (flags & 2) spectra++;
       }
@@ -39,13 +40,14 @@ export async function loadCore(fs = 48000) {
     },
     /** Feeds raw samples, a whole number of quanta. */
     feedSamples(samples) {
-      for (let off = 0; off < samples.length; off += QUANTUM) {
-        input.set(samples.subarray(off, off + QUANTUM));
-        x.process(QUANTUM);
+      for (let off = 0; off < samples.length; off += quantum) {
+        input.set(samples.subarray(off, off + quantum));
+        x.process(quantum);
       }
     },
     power: () => Float32Array.from(view(Float32Array, x.power_ptr(), bins)),
     averageDb: () => Float32Array.from(view(Float32Array, x.average_db(), bins)),
+    currentDb: () => Float32Array.from(view(Float32Array, x.current_db(), bins)),
     setColumns(edges) {
       cols = edges.length / 2;
       view(Float32Array, x.edges_ptr(), edges.length).set(edges);

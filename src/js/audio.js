@@ -61,7 +61,7 @@ export async function startAudio({ mode, onLevel, onSpectrum, onAverage, onPcm, 
     node.port.onmessage = ({ data }) => {
       if (data.type === 'level') onLevel(data.report);
       else if (data.type === 'spectrum') onSpectrum(data.live, data.average);
-      else if (data.type === 'average') onAverage(data.db);
+      else if (data.type === 'average') onAverage(data.db, data.current);
       else if (data.type === 'pcm') onPcm(data.data);
       else if (data.type === 'record-end') onRecordEnd();
     };

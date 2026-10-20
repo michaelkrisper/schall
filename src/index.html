@@ -22,6 +22,7 @@
 <link rel="modulepreload" href="js/settings.js">
 <link rel="modulepreload" href="js/level-view.js">
 <link rel="modulepreload" href="js/spectrum-view.js">
+<link rel="modulepreload" href="js/tracker.js">
 <link rel="modulepreload" href="js/recorder.js">
 <link rel="modulepreload" href="js/recordings-view.js">
 <script type="module" src="js/main.js"></script>
@@ -149,7 +150,7 @@
         <dt>Maximum</dt><dd>Höchster Pegel mit der gewählten Zeitbewertung. Spitze: höchster Momentanwert.</dd>
         <dt>dB(A) · dB(C) · dB(Z)</dt><dd>A wie das Gehör empfindet (Standard für Lärm), C fast linear für tiefe Töne, Z unbewertet.</dd>
         <dt>Fast · Slow</dt><dd>125 ms folgt schnellen Änderungen, 1 s zeigt ruhiger an.</dd>
-        <dt>Stärkste Frequenzen</dt><dd>Aus dem gemittelten Spektrum (FFT mit 16384 Punkten, ca. 3 Hz Auflösung). „2× ①“ heißt: doppelte Frequenz von Nummer 1, typisch für Motoren und Lüfter.</dd>
+        <dt>Stärkste Frequenzen</dt><dd>Die Töne werden über die Zeit verfolgt (1 s, 10 s oder seit „Neu“, je nach Mittelung). Vorne steht, was mindestens die halbe Zeit am lautesten da ist: Ein gleichbleibender Ton schlägt einen kurzen lauten. Der Balken zeigt, wie beständig ein Ton ist (voll = die ganze Zeit), die Zahl seinen typischen Pegel. „2× ①“ heißt doppelte Frequenz von Nummer 1, typisch für Motoren und Lüfter. Auflösung ca. 3 Hz (FFT mit 16384 Punkten), Genauigkeit ca. 0,1 Hz.</dd>
       </dl>
     </section>
     <p class="about">Schall · <a href="https://github.com/michaelkrisper/schall">Quellcode</a> · MIT-Lizenz</p>

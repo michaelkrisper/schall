@@ -34,6 +34,13 @@ body {
   background: var(--bg);
 }
 
+/* Native feel: scrolling yes, zooming (pinch, double tap) no. */
+html {
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   color: var(--text);
   font:
@@ -44,6 +51,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
   font-variant-numeric: tabular-nums;

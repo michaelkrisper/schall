@@ -22,6 +22,7 @@ const SHELL = [
   'js/settings.js',
   'js/level-view.js',
   'js/spectrum-view.js',
+  'js/tracker.js',
   'js/recorder.js',
   'js/recordings-view.js',
 ];

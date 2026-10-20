@@ -4,7 +4,8 @@
 // shaders do the rest (scaling, colour map, scrolling via a ring of rows).
 // Labels, grid, peak markers and the cursor are a 2D canvas on top.
 
-import { columnEdges, findPeaks, formatDb, formatHz, harmonics, noteOf } from './dsp.js';
+import { columnEdges, formatDb, formatHz, harmonics, noteOf } from './dsp.js';
+import { ToneTracker, WINDOWS } from './tracker.js';
 
 const MIN_HZ = 20;
 const ROWS = 512; // spectrogram history, about 11 s
@@ -126,6 +127,7 @@ export function createSpectrumView() {
   let filled = 0;
   let lastAvg = null;
   let peaks = [];
+  let tracker = null;
   let harm = [];
   let top = 100;
   let lowerSince = 0;
@@ -363,9 +365,16 @@ export function createSpectrumView() {
     o.fillText(text, bx + tw / 2, 15.5);
   }
 
+  // The averaged level near a frequency, for the marker on the averaged line.
+  function levelNear(db, hz) {
+    const k = Math.round(hz / audio.binHz);
+    let max = Number.NEGATIVE_INFINITY;
+    for (let i = Math.max(0, k - 2); i <= Math.min(db.length - 1, k + 2); i++) max = Math.max(max, db[i]);
+    return max;
+  }
+
   function renderList() {
     const off = settings.offset;
-    const strongest = peaks[0]?.db ?? 0;
     items.forEach((item, i) => {
       const p = peaks[i];
       item.li.classList.toggle('empty', !p);
@@ -385,8 +394,9 @@ export function createSpectrumView() {
         meta = `${n.name} ${n.cents >= 0 ? '+' : '−'}${Math.abs(n.cents)} ct`;
       }
       item.meta.textContent = meta;
-      item.db.textContent = `${formatDb(p.db + off)} dB`;
-      item.li.style.setProperty('--w', String(Math.max(0.04, 1 - (strongest - p.db) / 40)));
+      item.db.textContent = `${formatDb(p.level + off)} dB`;
+      // The bar shows how steadily the tone is there: full = all the time.
+      item.li.style.setProperty('--w', String(Math.max(0.04, p.presence)));
     });
   }
 
@@ -437,6 +447,8 @@ export function createSpectrumView() {
       audio = next;
       settings = s;
       cols = 0;
+      maxHz = Math.min(20000, audio.sampleRate / 2);
+      tracker = new ToneTracker(audio.binHz);
       peaks = [];
       harm = [];
       renderList();
@@ -455,6 +467,7 @@ export function createSpectrumView() {
       }
     },
     reset() {
+      tracker?.reset();
       peaks = [];
       harm = [];
       renderList();
@@ -473,25 +486,30 @@ export function createSpectrumView() {
       lastAvg = avg;
       dirty = true;
     },
-    onAverage(db) {
+    /** `db`: the selected average, `current`: the latest spectrum, which the tracker follows. */
+    onAverage(db, current) {
       if (!audio) return;
-      peaks = findPeaks(db, audio.binHz, { maxHz });
+      tracker.update(current, { maxHz });
+      peaks = tracker
+        .ranked(WINDOWS[settings.averaging])
+        .map((tone) => ({ ...tone, db: levelNear(db, tone.hz) }));
       harm = harmonics(peaks, audio.binHz);
+      if (!visible) return;
       renderList();
       drawOverlay();
     },
-    /** Every animation frame while measuring. */
+    /** Every animation frame while measuring, visible or not: the tracker needs the whole history. */
     frame(now, s) {
       settings = s;
-      if (!visible || !audio) return;
-      if (dirty) {
-        drawGl();
-        dirty = false;
-      }
+      if (!audio) return;
       if (now - peaksAt >= 250) {
         peaksAt = now;
-        autoRange(now);
+        if (visible) autoRange(now);
         audio.send({ type: 'average' });
+      }
+      if (visible && dirty) {
+        drawGl();
+        dirty = false;
       }
     },
     redraw(s) {

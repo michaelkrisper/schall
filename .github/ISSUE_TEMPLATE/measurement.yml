@@ -1,0 +1,34 @@
+name: Measurement looks wrong
+description: A level or frequency that does not match a reference
+labels: [measurement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What was measured?
+      description: The sound source, the app's reading (level, weighting, Fast/Slow, frequency), and what you expected.
+    validations:
+      required: true
+  - type: input
+    id: reference
+    attributes:
+      label: Reference
+      description: Sound level meter or app you compared with, and its reading.
+      placeholder: e.g. NIOSH SLM, 64.5 dB(A) LAeq over 30 s
+  - type: input
+    id: calibration
+    attributes:
+      label: Calibration
+      description: The correction shown in Settings (e.g. +100.0 dB = not calibrated).
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: e.g. Pixel 8, Chrome 141
+    validations:
+      required: true
+  - type: textarea
+    id: recording
+    attributes:
+      label: Recording
+      description: If possible, attach the WAV recording (zip it if GitHub refuses the file type).

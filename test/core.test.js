@@ -13,8 +13,8 @@ const near = (actual, expected, tolerance, what = '') =>
     `${what} ${actual.toFixed(4)} is not within ±${tolerance} of ${expected.toFixed(4)}`,
   );
 
-async function measure(signal, seconds, fs = 48000) {
-  const core = await loadCore(fs);
+async function measure(signal, seconds, fs = 48000, options = {}) {
+  const core = await loadCore(fs, options);
   const stats = new LevelStats();
   for (const report of core.feed(signal, seconds).reports) stats.add(report);
   return stats;
@@ -49,6 +49,43 @@ describe('level meter', () => {
       near(stats.leq(2), -30, 0.1, 'Z');
     });
   }
+
+  it('gives the same result for any render quantum size and at 96 kHz', async () => {
+    for (const [fs, quantum] of [
+      [48000, 256],
+      [48000, 1024],
+      [96000, 128],
+    ]) {
+      const stats = await measure(sine(1000, -20), 2, fs, { quantum });
+      near(stats.leq(0), -20, 0.02, `Leq at ${fs} Hz, ${quantum} per block`);
+      near(stats.seconds, 1.5, 0.06, `time at ${fs} Hz, ${quantum} per block`);
+    }
+  });
+
+  it('ignores a DC offset of the microphone', async () => {
+    const tone = sine(1000, -40);
+    const stats = await measure((t) => 0.3 + tone(t), 3);
+    for (let w = 0; w < 3; w++) near(stats.level(w, 0), -40, 0.1, `Fast[${w}]`);
+  });
+
+  it('reads a full-scale square wave without overflow', async () => {
+    const stats = await measure((t) => (Math.sin(2 * Math.PI * 1000 * t) >= 0 ? 1 : -1), 2);
+    near(stats.leq(2), 0, 0.1, 'Z Leq');
+    assert.ok(stats.peak(2) >= -0.1 && stats.peak(2) < 0.5, `Z peak ${stats.peak(2)}`);
+  });
+
+  it('stays finite on digital silence', async () => {
+    const core = await loadCore();
+    const stats = new LevelStats();
+    for (const r of core.feed(() => 0, 1).reports) stats.add(r);
+    assert.equal(stats.leq(0), -Infinity);
+    const db = core.averageDb();
+    assert.ok(
+      db.every((v) => v <= -290 && !Number.isNaN(v)),
+      'silence reads about -300 dB, never NaN',
+    );
+    assert.deepEqual(findPeaks(db, core.binHz), []);
+  });
 
   it('follows a level step with Fast at once and with Slow within seconds', async () => {
     const core = await loadCore();
@@ -165,6 +202,29 @@ describe('spectrum', () => {
     // Exponential with τ = 10 s: after 5 s the old tone still has e^-0.5 of the weight.
     near(at(db, 500), -20 + 10 * Math.log10(Math.exp(-0.5)), 0.4, '10 s: 500 Hz');
     near(at(db, 2000), -20 + 10 * Math.log10(1 - Math.exp(-0.5)), 0.4, '10 s: 2000 Hz');
+  });
+
+  it('forgets everything before a reset in the total average', async () => {
+    const core = await loadCore();
+    core.x.set_mode(2);
+    core.feed(sine(1000, -20), 1);
+    // The reset clears the averages, not the 341 ms window: let it move on first.
+    core.feed(sine(2000, -20), 0.5);
+    core.x.reset_spectrum();
+    core.feed(sine(2000, -20), 1);
+    const db = core.averageDb();
+    assert.ok(db[Math.round(1000 / core.binHz)] < -100, '1 kHz gone');
+    near(findPeaks(db, core.binHz)[0].hz, 2000, 0.1, 'only 2 kHz');
+  });
+
+  it('rejects unsupported sizes', async () => {
+    const { x } = await loadCore();
+    assert.equal(x.setup(48000, 1000, 128, 2400), 1, 'not a power of two');
+    assert.equal(x.setup(48000, 32768, 128, 2400), 1, 'too large');
+    assert.equal(x.setup(48000, 1024, 2048, 2400), 1, 'hop longer than the window');
+    assert.equal(x.columns(4097), 1, 'too many columns');
+    assert.equal(x.setup(48000, 4096, 512, 2400), 0, 'a smaller FFT is fine');
+    assert.equal(x.bins(), 2048);
   });
 
   it('pools bins into logarithmic display columns', async () => {

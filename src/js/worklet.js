@@ -33,7 +33,8 @@ class SchallProcessor extends AudioWorkletProcessor {
       dsp.reset_spectrum();
     } else if (data.type === 'average') {
       const db = new Float32Array(dsp.memory.buffer, dsp.average_db(), dsp.bins()).slice();
-      this.port.postMessage({ type: 'average', db }, [db.buffer]);
+      const current = new Float32Array(dsp.memory.buffer, dsp.current_db(), dsp.bins()).slice();
+      this.port.postMessage({ type: 'average', db, current }, [db.buffer, current.buffer]);
     } else if (data.type === 'record') {
       if (data.on) {
         this.pcm = new Int16Array(Math.round(sampleRate / 2));

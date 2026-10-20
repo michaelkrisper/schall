@@ -1,9 +1,10 @@
 name: Deploy
 
-# Builds the Rust DSP core to WebAssembly, lints, runs all tests (including
-# the app in headless Chrome with a fake microphone) and publishes src/ to
-# GitHub Pages on every push to main. The service worker gets the commit
-# stamped in, so each release installs a fresh app cache.
+# Lints (rustfmt, clippy, Biome), builds the Rust DSP core to WebAssembly,
+# runs all tests (including the app in headless Chrome with a fake
+# microphone) and publishes src/ to GitHub Pages on every push to main. The
+# service worker gets the commit stamped in, so each release installs a fresh
+# app cache.
 
 on:
   push:
@@ -27,9 +28,12 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - name: Rust target
-        run: rustup target add wasm32-unknown-unknown
+      - name: Rust toolchain
+        run: |
+          rustup target add wasm32-unknown-unknown
+          rustup component add rustfmt clippy
       - run: npm ci
+      - run: npm run lint:rust
       - run: npm run wasm
       - run: npm run check
       - name: Stamp version

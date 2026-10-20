@@ -80,6 +80,7 @@ struct State {
     total: [f64; MAX_M],
     selected: [f32; MAX_M],
     selected_db: [f32; MAX_M],
+    current_db: [f32; MAX_M],
     frames: f64,
     alpha_short: f32,
     alpha_long: f32,
@@ -138,6 +139,7 @@ static mut STATE: State = State {
     total: [0.0; MAX_M],
     selected: [0.0; MAX_M],
     selected_db: [0.0; MAX_M],
+    current_db: [0.0; MAX_M],
     frames: 0.0,
     alpha_short: 0.0,
     alpha_long: 0.0,
@@ -152,7 +154,7 @@ static mut STATE: State = State {
 #[inline(always)]
 fn st() -> &'static mut State {
     // Single-threaded: the worklet calls in strictly one after another.
-    unsafe { &mut *(&raw mut STATE) }
+    unsafe { &mut *core::ptr::addr_of_mut!(STATE) }
 }
 
 // ---------------------------------------------------------------------------
@@ -214,7 +216,10 @@ fn exp_neg(x: f64) -> f64 {
 fn db4(x: v128) -> v128 {
     let x = f32x4_max(x, f32x4_splat(1e-30));
     let exponent = f32x4_convert_i32x4(i32x4_sub(u32x4_shr(x, 23), i32x4_splat(127)));
-    let mantissa = v128_or(v128_and(x, i32x4_splat(0x007f_ffff)), i32x4_splat(0x3f80_0000));
+    let mantissa = v128_or(
+        v128_and(x, i32x4_splat(0x007f_ffff)),
+        i32x4_splat(0x3f80_0000),
+    );
     let one = f32x4_splat(1.0);
     let t = f32x4_div(f32x4_sub(mantissa, one), f32x4_add(mantissa, one));
     let t2 = f32x4_mul(t, t);
@@ -227,8 +232,8 @@ fn db4(x: v128) -> v128 {
     let ln_m = f32x4_mul(p, t);
     // 10·log10(2) per octave, 10/ln(10) per neper.
     f32x4_add(
-        f32x4_mul(exponent, f32x4_splat(3.010_299_956_6)),
-        f32x4_mul(ln_m, f32x4_splat(4.342_944_819)),
+        f32x4_mul(exponent, f32x4_splat(3.010_3)),
+        f32x4_mul(ln_m, f32x4_splat(4.342_944_6)),
     )
 }
 
@@ -324,7 +329,8 @@ pub extern "C" fn setup(sample_rate: f64, fft_size: u32, hop: u32, report_sample
     s.pos = 0;
     s.warm = 0;
     for i in 0..n {
-        let w = BH[0] - BH[1] * cos_frac(i, n) + BH[2] * cos_frac(2 * i, n) - BH[3] * cos_frac(3 * i, n);
+        let w = BH[0] - BH[1] * cos_frac(i, n) + BH[2] * cos_frac(2 * i, n)
+            - BH[3] * cos_frac(3 * i, n);
         s.window[i] = w as f32;
         s.history[i] = 0.0;
     }
@@ -333,7 +339,11 @@ pub extern "C" fn setup(sample_rate: f64, fft_size: u32, hop: u32, report_sample
     s.scale = (2.0 / (gain * gain)) as f32;
     let bits = m.trailing_zeros();
     for i in 0..m {
-        s.bitrev[i] = if bits == 0 { 0 } else { (i as u32).reverse_bits() >> (32 - bits) };
+        s.bitrev[i] = if bits == 0 {
+            0
+        } else {
+            (i as u32).reverse_bits() >> (32 - bits)
+        };
     }
     // Twiddles of the stage with half-size h at h..2h: e^(-iπj/h).
     let mut h = 1;
@@ -391,17 +401,28 @@ pub extern "C" fn columns(count: u32) -> u32 {
 #[unsafe(no_mangle)]
 pub extern "C" fn average_db() -> *const f32 {
     let s = st();
-    let m = s.fft_m;
+    to_db(&s.selected, &mut s.selected_db, s.fft_m);
+    s.selected_db.as_ptr()
+}
+
+/// The latest spectrum (one 341 ms window, no averaging) in dB: what the
+/// tone tracker follows. An average would let a short loud sound linger.
+#[unsafe(no_mangle)]
+pub extern "C" fn current_db() -> *const f32 {
+    let s = st();
+    to_db(&s.power, &mut s.current_db, s.fft_m);
+    s.current_db.as_ptr()
+}
+
+fn to_db(src: &[f32; MAX_M], dst: &mut [f32; MAX_M], m: usize) {
     unsafe {
-        let src = s.selected.as_ptr();
-        let dst = s.selected_db.as_mut_ptr();
+        let (src, dst) = (src.as_ptr(), dst.as_mut_ptr());
         let mut k = 0;
         while k < m {
             store(dst.add(k), db4(load(src.add(k))));
             k += 4;
         }
     }
-    s.selected_db.as_ptr()
 }
 
 /// Feeds `count` samples from `input_ptr`. Returns flags: 1 = a level report
@@ -438,7 +459,9 @@ fn write_report(s: &mut State) {
     let r = &mut s.report;
     r[0] = s.n as f64;
     r[1] = s.n as f64 / s.sample_rate;
-    let groups = [s.sum, s.peak, s.fast, s.slow, s.fast_min, s.fast_max, s.slow_min, s.slow_max];
+    let groups = [
+        s.sum, s.peak, s.fast, s.slow, s.fast_min, s.fast_max, s.slow_min, s.slow_max,
+    ];
     for (g, v) in groups.iter().enumerate() {
         r[2 + 3 * g] = f32x4_extract_lane::<0>(*v) as f64;
         r[3 + 3 * g] = f32x4_extract_lane::<1>(*v) as f64;
@@ -459,7 +482,10 @@ fn level_block(s: &mut State, count: usize) -> bool {
         for k in 0..3 {
             let b = 5 * k;
             let out = f64x2_add(f64x2_mul(c[b], v), z1[k]);
-            z1[k] = f64x2_add(f64x2_sub(f64x2_mul(c[b + 1], v), f64x2_mul(c[b + 3], out)), z2[k]);
+            z1[k] = f64x2_add(
+                f64x2_sub(f64x2_mul(c[b + 1], v), f64x2_mul(c[b + 3], out)),
+                z2[k],
+            );
             z2[k] = f64x2_sub(f64x2_mul(c[b + 2], v), f64x2_mul(c[b + 4], out));
             v = out;
         }
@@ -840,4 +866,3 @@ fn ceil_index(x: f32) -> usize {
     let i = x as usize;
     if (i as f32) < x { i + 1 } else { i }
 }
-

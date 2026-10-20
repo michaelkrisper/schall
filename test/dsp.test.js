@@ -105,6 +105,25 @@ describe('notes and peaks', () => {
     );
   });
 
+  it('covers the whole musical range', () => {
+    assert.deepEqual(noteOf(27.5), { name: 'A0', cents: 0 });
+    assert.deepEqual(noteOf(4186.01), { name: 'C8', cents: 0 });
+    assert.deepEqual(noteOf(16.35), { name: 'C0', cents: 0 });
+  });
+
+  it('respects the count and the frequency range, and finds nothing in silence', () => {
+    const binHz = 48000 / 16384;
+    const db = new Float32Array(8192).fill(-90);
+    for (const hz of [60, 120, 500, 1000, 15000]) db[Math.round(hz / binHz)] = -40;
+    assert.equal(findPeaks(db, binHz, { count: 2 }).length, 2);
+    const mid = findPeaks(db, binHz, { minHz: 100, maxHz: 2000 }).map((p) => Math.round(p.hz / 10) * 10);
+    assert.deepEqual(
+      mid.sort((a, b) => a - b),
+      [120, 500, 1000],
+    );
+    assert.deepEqual(findPeaks(new Float32Array(8192).fill(-300), binHz), []);
+  });
+
   it('spreads display columns logarithmically', () => {
     const edges = columnEdges(100, 20, 20000, 3);
     assert.equal(edges.length, 200);
@@ -152,6 +171,22 @@ describe('level statistics', () => {
     }
     return r;
   };
+
+  it('keeps a ring of the last levels', () => {
+    const stats = new LevelStats({ historySeconds: 0.2, settleSeconds: 0 });
+    for (let i = 1; i <= 6; i++) stats.add(report(10 ** (-i / 10)));
+    assert.deepEqual([...stats.recent(0, 0, 10)], [-3, -4, -5, -6]);
+    assert.deepEqual([...stats.recent(0, 1, 0.1)], [-5, -6]);
+  });
+
+  it('reports nothing before the first measurement', () => {
+    const stats = new LevelStats();
+    assert.equal(stats.leq(0), -Infinity);
+    assert.equal(stats.min(0, 0), -Infinity);
+    assert.equal(stats.max(0, 0), -Infinity);
+    assert.equal(stats.level(0, 0), -Infinity);
+    assert.equal(stats.recent(0, 0, 60).length, 0);
+  });
 
   it('skips the settling time, then averages energy', () => {
     const stats = new LevelStats({ settleSeconds: 0.1 });
