@@ -83,6 +83,9 @@ button:disabled {
 
 .app {
   height: 100dvh;
+  /* Android Chrome can report 100dvh taller than the visible area (seen in an
+     installed PWA after a reload: 872 vs 815 px), pushing the tabs off screen. */
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   padding: var(--top) max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));

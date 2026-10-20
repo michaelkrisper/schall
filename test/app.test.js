@@ -254,6 +254,15 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     await screenshot('spectrum');
   });
 
+  it('keeps the tab bar on screen in every view', async () => {
+    for (const view of ['level', 'spectrum', 'recordings']) {
+      await click(`.tab[data-view="${view}"]`);
+      const bottom = await evaluate(`document.querySelector('.tabs').getBoundingClientRect().bottom`);
+      assert.ok(bottom <= (await evaluate('innerHeight')) + 1, `${view}: tabs end at ${bottom}`);
+    }
+    await click('.tab[data-view="spectrum"]');
+  });
+
   it('switches the averaging and still finds the tones', async () => {
     assert.equal(await text('#averaging'), 'Ø 10 s');
     await click('#averaging');

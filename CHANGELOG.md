@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.3] - 2026-10-20
+
+### Fixed
+
+- The tab bar could disappear below the screen in the installed app on
+  Android: Chrome reported the dynamic viewport height (100dvh) taller than
+  the visible area. The app is now never taller than the page.
+
 ## [1.1.2] - 2026-10-20
 
 ### Changed
@@ -71,6 +79,7 @@ First release.
   headless Chrome with a fake microphone. CI builds, lints (Biome, rustfmt,
   clippy), tests and deploys to GitHub Pages.
 
+[1.1.3]: https://github.com/michaelkrisper/schall/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/michaelkrisper/schall/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/michaelkrisper/schall/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/michaelkrisper/schall/compare/v1.0.0...v1.1.0
