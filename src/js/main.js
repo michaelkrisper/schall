@@ -87,7 +87,10 @@ async function start() {
     audio = await startAudio({
       mode: settings.averaging,
       onLevel,
-      onSpectrum: (live, avg) => spectrum.onSpectrum(live, avg),
+      onSpectrum: (live, avg) => {
+        spectrum.onSpectrum(live, avg);
+        requestFrame();
+      },
       onAverage: (db, current) => spectrum.onAverage(db, current),
       onPcm: (pcm) => recording?.writer.write(pcm).catch(recordingFailed),
       onRecordEnd: finishRecording,
@@ -146,6 +149,7 @@ function onLevel(report) {
   stats.add(report);
   recording?.stats.add(report);
   levelDirty = true;
+  requestFrame();
 }
 
 function reset() {
@@ -237,8 +241,18 @@ function changed() {
   calibration();
 }
 
-function loop(now) {
+// Frames only when new data has come in (levels 20/s, spectra 47/s): an
+// endless animation loop would keep the phone rendering 60 frames a second.
+let framePending = false;
+
+function requestFrame() {
+  if (framePending) return;
+  framePending = true;
   requestAnimationFrame(loop);
+}
+
+function loop(now) {
+  framePending = false;
   if (state !== 'running') return;
   // New levels come 20 times a second; between them there is nothing to do.
   if (settings.view === 'level' && levelDirty) {
@@ -349,7 +363,6 @@ averagingLabel();
 level.labels(settings);
 showView(settings.view);
 setState('idle');
-requestAnimationFrame(loop);
 loadDsp().catch((error) => setState('idle', errorText(error)));
 
 // With the microphone already allowed, start right away; on iOS the audio

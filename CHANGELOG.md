@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.2] - 2026-10-20
+
+### Changed
+
+- The app only renders when new data has come in (levels 20/s, spectra
+  47/s) instead of in an endless 60 fps loop, and not at all while paused.
+
 ## [1.1.1] - 2026-10-20
 
 ### Changed
@@ -64,6 +71,7 @@ First release.
   headless Chrome with a fake microphone. CI builds, lints (Biome, rustfmt,
   clippy), tests and deploys to GitHub Pages.
 
+[1.1.2]: https://github.com/michaelkrisper/schall/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/michaelkrisper/schall/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/michaelkrisper/schall/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/michaelkrisper/schall/releases/tag/v1.0.0
