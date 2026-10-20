@@ -12,7 +12,6 @@ const DEFAULTS = {
   offset: DEFAULT_OFFSET,
   averaging: 1, // 1 s, 10 s, since reset
   range: 60, // history chart, seconds
-  view: 'level',
 };
 
 export function loadSettings() {

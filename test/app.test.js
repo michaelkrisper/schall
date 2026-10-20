@@ -208,7 +208,6 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     near(number(await text('#leq')), expected('A'), 0.5, 'LAeq');
     near(number(await text('#now')), expected('A'), 0.5, 'LAF');
     near(number(await text('#max')), expected('A'), 0.6, 'LAFmax');
-    await screenshot('level');
     await click('#weighting');
     await click('#weighting');
     assert.equal(await text('#weighting'), 'dB(Z)');
@@ -218,7 +217,6 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
   });
 
   it('lists the two tones as the strongest frequencies', async () => {
-    await click('.tab[data-view="spectrum"]');
     await sleep(2500);
     const rows = await evaluate(
       `[...document.querySelectorAll('#peak-list li:not(.empty)')].map((li) => [...li.children].map((c) => c.textContent))`,
@@ -251,16 +249,24 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
       return { ...info, lit: n / c.width, error: gl.getError() };
     })()`);
     assert.ok(probe.lit > 0.9 && probe.error === 0, JSON.stringify(probe));
-    await screenshot('spectrum');
+    await screenshot('main');
   });
 
-  it('keeps the tab bar on screen in every view', async () => {
-    for (const view of ['level', 'spectrum', 'recordings']) {
-      await click(`.tab[data-view="${view}"]`);
-      const bottom = await evaluate(`document.querySelector('.tabs').getBoundingClientRect().bottom`);
-      assert.ok(bottom <= (await evaluate('innerHeight')) + 1, `${view}: tabs end at ${bottom}`);
+  it('fits level and frequencies on one screen without scrolling', async () => {
+    const layout = await evaluate(`(() => {
+      const box = (s) => { const r = document.querySelector(s).getBoundingClientRect(); return { top: r.top, bottom: r.bottom, h: r.height }; };
+      return { inner: innerHeight, scroll: document.documentElement.scrollHeight,
+        parts: Object.fromEntries(['.top', '.hero', '.meter', '.stats', '.history', '.peaks', '.scope'].map((s) => [s, box(s)])) };
+    })()`);
+    assert.ok(layout.scroll <= layout.inner, `page scrolls: ${layout.scroll} > ${layout.inner}`);
+    for (const [part, { bottom, h }] of Object.entries(layout.parts)) {
+      assert.ok(
+        h > 0 && bottom <= layout.inner + 1,
+        `${part} not fully on screen: ${JSON.stringify(layout.parts[part])}`,
+      );
     }
-    await click('.tab[data-view="spectrum"]');
+    assert.ok(layout.parts['.scope'].h >= 170, `spectrum too small: ${layout.parts['.scope'].h}`);
+    assert.equal(await evaluate(`document.querySelectorAll('.tabs, .tab').length`), 0, 'no tab bar');
   });
 
   it('switches the averaging and still finds the tones', async () => {
@@ -282,7 +288,9 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     await sleep(1600);
     await click('#record');
     await waitFor(`!document.body.classList.contains('recording')`);
-    await click('.tab[data-view="recordings"]');
+    await waitFor(`document.getElementById('rec-count').textContent === '1'`);
+    await click('#recordings-btn');
+    await waitFor(`document.getElementById('recordings').open`);
     await waitFor(`document.querySelectorAll('#rec-list .rec').length === 1`);
     assert.match(await text('#rec-list .rec-meta'), /^0:0[12] · Ø \d+,\d · max \d+,\d dB\(A\)$/);
     const file = await evaluate(`(async () => {
@@ -316,10 +324,12 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     await waitFor(`document.querySelectorAll('#rec-list .rec').length === 0`);
     assert.equal(await evaluate(`document.getElementById('rec-empty').hidden`), false);
     assert.equal(await text('#rec-usage'), '');
+    assert.equal(await evaluate(`document.getElementById('rec-count').hidden`), true);
+    await click('#recordings form .primary');
+    await waitFor(`!document.getElementById('recordings').open`);
   });
 
   it('calibrates against a reference reading', async () => {
-    await click('.tab[data-view="level"]');
     await click('#settings-btn');
     await waitFor(`document.getElementById('settings').open`);
     assert.equal(await text('#cal-state'), 'Nicht kalibriert (Standardwert)');
@@ -336,7 +346,6 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
   });
 
   it('pauses and resumes', async () => {
-    await click('.tab[data-view="level"]');
     await click('#toggle');
     await waitFor(`document.body.dataset.state === 'paused'`);
     await click('#toggle');
@@ -348,7 +357,7 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     assert.equal(await text('#range'), '10 min');
     await click('#range');
     assert.equal(await text('#range'), '60 s');
-    await click('#view-level .reset');
+    await click('.reset');
     await sleep(300);
     assert.equal(await text('#duration'), '0:00');
   });
@@ -372,7 +381,6 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     assert.equal(await text('#weighting'), 'dB(C)');
     await click('#timing');
     assert.equal(await text('#timing'), 'Slow');
-    await click('.tab[data-view="spectrum"]');
     await evaluate('window.beforeReload = true');
     await page('Page.reload');
     await waitFor(`!window.beforeReload && !!window.schall`);
@@ -380,7 +388,6 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     assert.equal(await text('#timing'), 'Slow');
     assert.equal(await text('#leq-name'), 'LCeq');
     assert.equal(await text('#max-name'), 'LCSmax');
-    assert.equal(await evaluate(`document.getElementById('view-spectrum').hidden`), false);
     // The microphone is already allowed, so measuring resumes without a tap.
     await waitFor(`document.body.dataset.state === 'running'`);
   });

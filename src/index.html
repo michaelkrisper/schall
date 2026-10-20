@@ -35,6 +35,10 @@
     <button id="record" class="icon-btn record" type="button" aria-label="Aufnehmen" disabled>
       <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><circle class="i-rec" cx="12" cy="12" r="6"/><rect class="i-stop" x="7" y="7" width="10" height="10" rx="2"/></svg>
     </button>
+    <button id="recordings-btn" class="icon-btn" type="button" aria-label="Aufnahmen">
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h9M4 18h6"/><path class="i-fill" d="M16 14.5v6l5-3Z"/></svg>
+      <span id="rec-count" class="badge" hidden></span>
+    </button>
     <button id="toggle" class="icon-btn" type="button" aria-label="Pause">
       <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M8.5 5v14M15.5 5v14"/><path class="i-play" d="M7 4.5v15l12-7.5Z"/></svg>
     </button>
@@ -43,42 +47,40 @@
     </button>
   </header>
 
-  <main id="view-level" class="view view-level">
+  <main class="view">
     <section class="hero">
-      <div class="modes">
-        <button id="weighting" class="chip" type="button" aria-label="Frequenzbewertung wechseln">dB(A)</button>
-        <button id="timing" class="chip" type="button" aria-label="Zeitbewertung wechseln">Fast</button>
-      </div>
       <div class="now"><span id="now">–</span><span class="unit">dB</span></div>
-      <div id="class" class="class">&nbsp;</div>
-      <div class="meter" aria-hidden="true">
-        <div class="meter-track"><div id="meter-fill" class="meter-fill"></div><div id="meter-max" class="meter-max" hidden></div></div>
-        <div class="meter-scale"><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span><span>120</span></div>
+      <div class="hero-side">
+        <div class="modes">
+          <button id="weighting" class="chip" type="button" aria-label="Frequenzbewertung wechseln">dB(A)</button>
+          <button id="timing" class="chip" type="button" aria-label="Zeitbewertung wechseln">Fast</button>
+        </div>
+        <div id="class" class="class">&nbsp;</div>
       </div>
     </section>
+    <div class="meter" aria-hidden="true">
+      <div class="meter-track"><div id="meter-fill" class="meter-fill"></div><div id="meter-max" class="meter-max" hidden></div></div>
+      <div class="meter-scale"><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span><span>120</span></div>
+    </div>
     <section class="stats">
-      <div class="tile big"><span class="label">Durchschnitt</span><span id="leq" class="value">–</span><span id="leq-name" class="name">LAeq</span></div>
-      <div class="tile big"><span class="label">Maximum</span><span id="max" class="value">–</span><span id="max-name" class="name">LAFmax</span></div>
-      <div class="tile"><span class="label">Minimum</span><span id="min" class="value">–</span></div>
-      <div class="tile"><span class="label">Spitze</span><span id="peak" class="value">–</span></div>
-      <div class="tile"><span class="label">Dauer</span><span id="duration" class="value">0:00</span></div>
+      <div class="tile main"><span class="label">Durchschnitt</span><span id="leq" class="value">–</span><span id="leq-name" class="name">LAeq</span></div>
+      <div class="tile main"><span class="label">Maximum</span><span id="max" class="value">–</span><span id="max-name" class="name">LAFmax</span></div>
+      <div class="tile"><span class="label">Minimum</span><span id="min" class="value">–</span><span class="name">&nbsp;</span></div>
+      <div class="tile"><span class="label">Spitze</span><span id="peak" class="value">–</span><span class="name">&nbsp;</span></div>
     </section>
     <section class="card history">
       <div class="card-head">
         <span class="card-title">Verlauf</span>
+        <span id="duration" class="card-note">0:00</span>
         <button id="range" class="chip small" type="button" aria-label="Zeitraum wechseln">60 s</button>
         <button class="reset chip small" type="button">Neu starten</button>
       </div>
       <canvas id="history"></canvas>
     </section>
-  </main>
-
-  <main id="view-spectrum" class="view view-spectrum" hidden>
     <section class="card peaks">
       <div class="card-head">
         <span class="card-title">Stärkste Frequenzen</span>
         <button id="averaging" class="chip small" type="button" aria-label="Mittelung wechseln">Ø 10 s</button>
-        <button class="reset chip small" type="button">Neu</button>
       </div>
       <ol id="peak-list" class="peak-list"></ol>
     </section>
@@ -88,29 +90,6 @@
       <p class="no-gl-text">Für Spektrum und Spektrogramm braucht es WebGL2.</p>
     </section>
   </main>
-
-  <main id="view-recordings" class="view view-recordings" hidden>
-    <section class="card recs">
-      <div class="card-head">
-        <span class="card-title">Aufnahmen</span>
-        <span id="rec-usage" class="card-note"></span>
-      </div>
-      <p id="rec-empty" class="rec-empty">Noch keine Aufnahmen. Während der Messung nimmt der rote Knopf oben auf.</p>
-      <ul id="rec-list" class="rec-list"></ul>
-    </section>
-  </main>
-
-  <nav class="tabs" role="tablist">
-    <button class="tab" type="button" role="tab" data-view="level" aria-selected="true">
-      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V6M15 20v-9M20 20V9"/></svg>Pegel
-    </button>
-    <button class="tab" type="button" role="tab" data-view="spectrum" aria-selected="false">
-      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18c2 0 2-10 4-10s2 7 4 7 2-11 4-11 2 9 4 9 1.5-3 2-3"/></svg>Frequenzen
-    </button>
-    <button class="tab" type="button" role="tab" data-view="recordings" aria-selected="false">
-      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg>Aufnahmen
-    </button>
-  </nav>
 </div>
 
 <div id="start" class="start">
@@ -123,6 +102,18 @@
     <p class="hint">Das Mikrofon wird nur auf diesem Gerät ausgewertet. Nichts verlässt das Gerät, Aufnahmen bleiben im Speicher des Browsers.</p>
   </div>
 </div>
+
+<dialog id="recordings" class="sheet">
+  <form method="dialog">
+    <div class="sheet-head">
+      <h2>Aufnahmen</h2>
+      <span id="rec-usage" class="card-note"></span>
+    </div>
+    <p id="rec-empty" class="rec-empty">Noch keine Aufnahmen. Während der Messung nimmt der rote Knopf oben auf.</p>
+    <ul id="rec-list" class="rec-list"></ul>
+    <button class="primary" value="close">Fertig</button>
+  </form>
+</dialog>
 
 <dialog id="settings" class="sheet">
   <form method="dialog">
@@ -150,7 +141,7 @@
         <dt>Maximum</dt><dd>Höchster Pegel mit der gewählten Zeitbewertung. Spitze: höchster Momentanwert.</dd>
         <dt>dB(A) · dB(C) · dB(Z)</dt><dd>A wie das Gehör empfindet (Standard für Lärm), C fast linear für tiefe Töne, Z unbewertet.</dd>
         <dt>Fast · Slow</dt><dd>125 ms folgt schnellen Änderungen, 1 s zeigt ruhiger an.</dd>
-        <dt>Stärkste Frequenzen</dt><dd>Die Töne werden über die Zeit verfolgt (1 s, 10 s oder seit „Neu“, je nach Mittelung). Vorne steht, was mindestens die halbe Zeit am lautesten da ist: Ein gleichbleibender Ton schlägt einen kurzen lauten. Der Balken zeigt, wie beständig ein Ton ist (voll = die ganze Zeit), die Zahl seinen typischen Pegel. „2× ①“ heißt doppelte Frequenz von Nummer 1, typisch für Motoren und Lüfter. Auflösung ca. 3 Hz (FFT mit 16384 Punkten), Genauigkeit ca. 0,1 Hz.</dd>
+        <dt>Stärkste Frequenzen</dt><dd>Die Töne werden über die Zeit verfolgt (1 s, 10 s oder seit „Neu starten“, je nach Mittelung). Vorne steht, was mindestens die halbe Zeit am lautesten da ist: Ein gleichbleibender Ton schlägt einen kurzen lauten. Der Balken zeigt, wie beständig ein Ton ist (voll = die ganze Zeit), die Zahl seinen typischen Pegel. „2× ①“ heißt doppelte Frequenz von Nummer 1, typisch für Motoren und Lüfter. Auflösung ca. 3 Hz (FFT mit 16384 Punkten), Genauigkeit ca. 0,1 Hz.</dd>
       </dl>
     </section>
     <p class="about">Schall · <a href="https://github.com/michaelkrisper/schall">Quellcode</a> · MIT-Lizenz</p>

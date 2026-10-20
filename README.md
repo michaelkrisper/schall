@@ -18,11 +18,11 @@ an aircraft cabin. Record it, play it back, keep it as a WAV file.
 ![WebGL2](https://img.shields.io/badge/graphics-WebGL2-990000)
 ![PWA](https://img.shields.io/badge/PWA-installable%20%C2%B7%20offline-5a0fc8)
 
-<img src="docs/screenshot-level.webp" width="250" alt="Level tab: current level, average, maximum, minimum, peak and a one-minute history chart">
+<img src="docs/screenshot-main.webp" width="250" alt="The one screen: current level, average, maximum, minimum, peak, history chart, the strongest frequencies with notes and steadiness bars, spectrum with numbered markers and spectrogram">
 &nbsp;
-<img src="docs/screenshot-spectrum.webp" width="250" alt="Frequency tab: the strongest frequencies with notes and steadiness bars, spectrum with numbered markers and spectrogram">
+<img src="docs/screenshot-recordings.webp" width="250" alt="Recordings sheet with a saved recording and play, download and delete buttons">
 &nbsp;
-<img src="docs/screenshot-recordings.webp" width="250" alt="Recordings tab with a saved recording and play, download and delete buttons">
+<img src="docs/screenshot-settings.webp" width="250" alt="Settings sheet with calibration and an explanation of the values">
 
 </div>
 
@@ -44,6 +44,9 @@ an aircraft cabin. Record it, play it back, keep it as a WAV file.
 
 ## Features
 
+Everything on one screen, no tabs: level at the top, frequencies below,
+recordings and settings behind the buttons in the top bar.
+
 **Level**
 
 - Current level in large digits, with an everyday description ("Normales
@@ -52,7 +55,8 @@ an aircraft cabin. Record it, play it back, keep it as a WAV file.
   measuring time.
 - Frequency weighting A, C or Z and time weighting Fast (125 ms) or Slow
   (1 s), as defined by IEC 61672-1.
-- History chart over the last minute or ten minutes, with the average marked.
+- History chart over the last minute or ten minutes, with the average marked
+  (on short screens it gives way to the spectrum).
 
 **Frequencies**
 
@@ -70,7 +74,9 @@ an aircraft cabin. Record it, play it back, keep it as a WAV file.
 
 **Recordings**
 
-- One tap records exactly what is being measured, as 16-bit mono WAV.
+- One tap on the red button records exactly what is being measured, as
+  16-bit mono WAV; the list opens from the button next to it, which shows how
+  many recordings there are.
 - Stored in the browser while recording, so nothing is lost if the app is
   closed; listed with date, duration, average and maximum.
 - Play back in the app (the measurement pauses meanwhile, so the speaker does
@@ -107,11 +113,12 @@ adjusted in 0.5 dB steps.
 
 ## Measuring well
 
-- **Average noise** (a room, a street, a neighbour): tap *Neu starten*, keep
+- **Average noise** (a room, a street, a neighbour): tap *Neu starten* (in
+  the history header), keep
   the phone still and away from your body, and let it run. The average
   (LAeq) settles after a minute or two; the maximum shows the loudest moment.
-- **Main frequency of a machine, fan or engine:** open *Frequenzen*, choose
-  *Ø 10 s* or *Ø gesamt* and wait a few seconds. Steady tones move to the top,
+- **Main frequency of a machine, fan or engine:** set the averaging next to
+  *Stärkste Frequenzen* to *Ø 10 s* or *Ø gesamt* and wait a few seconds. Steady tones move to the top,
   their harmonics are marked. In an aircraft cabin, a car or next to a fan,
   the first entries are the engine, blade or motor tones.
 - **Tuning or pitch:** the first entry shows the note and cents; with
@@ -242,7 +249,7 @@ files ([deploy.yml](.github/workflows/deploy.yml)).
 | [`test/dsp.test.js`](test/dsp.test.js) | 17 | Filter design against the IEC 61672 table and curves, notes, peak finding, formatting, statistics and history ring, WAV header and file names |
 | [`test/tracker.test.js`](test/tracker.test.js) | 5 | Tone tracker: steady before transient, louder-but-mostly-there first, drift, windows, and a hum among loud bursts on the real core |
 | [`test/structure.test.js`](test/structure.test.js) | 8 | Offline cache and module preloads complete, element ids exist, icon sizes, Rust and JavaScript agree on buffer layouts, versions match |
-| [`test/app.test.js`](test/app.test.js) | 15 | The app in headless Chrome with a fake microphone playing two known tones: levels on screen, tab bar on screen, the frequency list, the WebGL spectrogram, averaging, recording and the WAV file, playback, delete, calibration, pause, history range, no zoom, settings after a reload, offline start from the service worker, no console errors |
+| [`test/app.test.js`](test/app.test.js) | 15 | The app in headless Chrome with a fake microphone playing two known tones: levels on screen, everything on one screen without scrolling, the frequency list, the WebGL spectrogram, averaging, recording and the WAV file, playback, delete, calibration, pause, history range, no zoom, settings after a reload, offline start from the service worker, no console errors |
 
 The browser test is skipped when no Chrome is installed (set `CHROME` to its
 path otherwise).
@@ -253,16 +260,16 @@ path otherwise).
 src/                     the app as deployed
   index.html, styles.css, manifest.webmanifest, sw.js
   dsp.wasm               the DSP core, built from wasm/
-  js/main.js             start/pause, tabs, settings, recording, render loop
+  js/main.js             start/pause, sheets, settings, recording, render loop
   js/audio.js            microphone → AudioWorklet
   js/worklet.js          audio thread: feeds dsp.wasm, posts results
   js/dsp.js              filter design, peak finding, notes, formatting (pure)
   js/stats.js            level statistics and history (pure)
   js/tracker.js          tone tracker (pure)
-  js/level-view.js       level tab
-  js/spectrum-view.js    frequency tab, WebGL2 and overlay
+  js/level-view.js       level, statistics and history chart
+  js/spectrum-view.js    strongest frequencies, spectrum and spectrogram (WebGL2 and overlay)
   js/recorder.js         recordings in IndexedDB, WAV files
-  js/recordings-view.js  recordings tab
+  js/recordings-view.js  recordings sheet
 wasm/src/lib.rs          the DSP core in Rust (no_std, no dependencies)
 scripts/                 dev server, wasm and icon builds
 test/                    tests, see above

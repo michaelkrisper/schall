@@ -1,4 +1,4 @@
-// Wiring: start/pause, tabs, settings, recording, the render loop.
+// Wiring: start/pause, settings, recording, the render loop.
 
 import { errorText, loadDsp, startAudio } from './audio.js';
 import { formatDb, formatDuration, REPORT_SECONDS } from './dsp.js';
@@ -13,7 +13,14 @@ const $ = (id) => document.getElementById(id);
 const settings = loadSettings();
 const level = createLevelView();
 const spectrum = createSpectrumView();
-const recordings = createRecordingsView({ onPlay: pauseForPlayback, onPlayEnd: resumeAfterPlayback });
+const recordings = createRecordingsView({
+  onPlay: pauseForPlayback,
+  onPlayEnd: resumeAfterPlayback,
+  onCount: (count) => {
+    $('rec-count').hidden = !count;
+    $('rec-count').textContent = String(count);
+  },
+});
 
 let stats = new LevelStats({ reportSeconds: REPORT_SECONDS });
 let audio = null;
@@ -214,20 +221,6 @@ function recordingFailed(error) {
 
 // --- Views ---
 
-function showView(view) {
-  settings.view = view;
-  saveSettings(settings);
-  for (const tab of document.querySelectorAll('.tab')) {
-    tab.setAttribute('aria-selected', String(tab.dataset.view === view));
-  }
-  $('view-level').hidden = view !== 'level';
-  $('view-spectrum').hidden = view !== 'spectrum';
-  $('view-recordings').hidden = view !== 'recordings';
-  spectrum.show(view === 'spectrum', settings);
-  if (view === 'level') refreshLevel();
-  if (view === 'recordings') recordings.refresh();
-}
-
 function refreshLevel() {
   level.labels(settings);
   level.frame(stats, settings, performance.now(), true);
@@ -255,7 +248,7 @@ function loop(now) {
   framePending = false;
   if (state !== 'running') return;
   // New levels come 20 times a second; between them there is nothing to do.
-  if (settings.view === 'level' && levelDirty) {
+  if (levelDirty) {
     levelDirty = false;
     level.frame(stats, settings, now);
     level.chart(stats, settings, now);
@@ -296,9 +289,11 @@ $('start-btn').addEventListener('click', start);
 $('toggle').addEventListener('click', togglePause);
 $('record').addEventListener('click', toggleRecording);
 for (const button of document.querySelectorAll('.reset')) button.addEventListener('click', reset);
-for (const tab of document.querySelectorAll('.tab')) {
-  tab.addEventListener('click', () => showView(tab.dataset.view));
-}
+$('recordings-btn').addEventListener('click', () => {
+  recordings.refresh();
+  $('recordings').showModal();
+});
+$('recordings').addEventListener('close', () => recordings.stopPlayer());
 $('weighting').addEventListener('click', () => {
   settings.weighting = (settings.weighting + 1) % 3;
   changed();
@@ -328,9 +323,12 @@ $('cal-reset').addEventListener('click', () => {
   settings.offset = DEFAULT_OFFSET;
   changed();
 });
-$('settings').addEventListener('click', (e) => {
-  if (e.target === $('settings')) $('settings').close();
-});
+// A tap on the dimmed backdrop closes a sheet.
+for (const sheet of [$('settings'), $('recordings')]) {
+  sheet.addEventListener('click', (e) => {
+    if (e.target === sheet) sheet.close();
+  });
+}
 
 // No zooming, like a native app. iOS ignores user-scalable=no in the viewport
 // tag, so pinch gestures, two-finger moves and double taps are stopped here
@@ -360,8 +358,9 @@ function averagingLabel() {
 // --- Start-up ---
 
 averagingLabel();
-level.labels(settings);
-showView(settings.view);
+refreshLevel();
+spectrum.show(true, settings);
+recordings.refresh();
 setState('idle');
 loadDsp().catch((error) => setState('idle', errorText(error)));
 

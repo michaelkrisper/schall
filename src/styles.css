@@ -84,11 +84,12 @@ button:disabled {
 .app {
   height: 100dvh;
   /* Android Chrome can report 100dvh taller than the visible area (seen in an
-     installed PWA after a reload: 872 vs 815 px), pushing the tabs off screen. */
+     installed PWA after a reload: 872 vs 815 px), pushing content off screen. */
   max-height: 100%;
   display: flex;
   flex-direction: column;
-  padding: var(--top) max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
+  padding: var(--top) max(14px, env(safe-area-inset-right)) env(safe-area-inset-bottom)
+    max(14px, env(safe-area-inset-left));
 }
 
 /* --- Top bar --- */
@@ -142,12 +143,34 @@ button:disabled {
 }
 
 .icon-btn {
+  position: relative;
   width: 40px;
   height: 40px;
   display: grid;
   place-items: center;
   border-radius: 12px;
   color: var(--muted);
+}
+
+.icon-btn .i-fill {
+  fill: currentColor;
+  stroke: none;
+}
+
+.badge {
+  position: absolute;
+  top: 3px;
+  right: 1px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #042f35;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
 }
 
 .icon-btn:active {
@@ -195,8 +218,8 @@ button:disabled {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--gap);
-  padding-bottom: var(--gap);
+  gap: 8px;
+  padding-bottom: 8px;
 }
 
 .card {
@@ -248,49 +271,60 @@ button:disabled {
   background: #252a33;
 }
 
-/* --- Pegel --- */
+/* --- Level --- */
 
 .hero {
   flex: none;
-  text-align: center;
-}
-
-.modes {
   display: flex;
-  justify-content: center;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .now {
-  margin-top: 2px;
-  font-size: clamp(64px, 22vw, 112px);
+  font-size: clamp(54px, 17vw, 76px);
   font-weight: 250;
   line-height: 1;
   letter-spacing: -0.04em;
+  white-space: nowrap;
 }
 
 .now .unit {
-  margin-left: 6px;
-  font-size: 0.24em;
+  margin-left: 4px;
+  font-size: 0.3em;
   font-weight: 500;
   letter-spacing: 0;
   color: var(--muted);
 }
 
+.hero-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+
+.modes {
+  display: flex;
+  gap: 6px;
+}
+
 .class {
-  margin-top: 4px;
-  font-size: 15px;
+  font-size: 13px;
   color: var(--muted);
+  text-align: right;
 }
 
 .meter {
-  margin: 12px 4px 0;
+  flex: none;
+  margin: 0 2px;
 }
 
 .meter-track {
   position: relative;
-  height: 10px;
-  border-radius: 5px;
+  height: 8px;
+  border-radius: 4px;
   background: linear-gradient(
     90deg,
     rgb(52 211 153 / 0.14) 0 35%,
@@ -306,7 +340,7 @@ button:disabled {
   inset: 0;
   transform-origin: 0 50%;
   transform: scaleX(0);
-  border-radius: 5px;
+  border-radius: 4px;
   background: #34d399;
 }
 
@@ -322,7 +356,7 @@ button:disabled {
 .meter-scale {
   display: flex;
   justify-content: space-between;
-  margin-top: 3px;
+  margin-top: 2px;
   font-size: 10px;
   color: var(--faint);
 }
@@ -330,50 +364,52 @@ button:disabled {
 .stats {
   flex: none;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
 }
 
 .tile {
-  grid-column: span 2;
   display: flex;
   flex-direction: column;
-  padding: 8px 10px;
-  border-radius: 14px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 12px;
   background: var(--card);
   border: 1px solid var(--border);
 }
 
-.tile.big {
-  grid-column: span 3;
-}
-
 .tile .label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tile .value {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--muted);
 }
 
-.tile.big .value {
-  font-size: 32px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
+.tile.main .value {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .tile .name {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--faint);
 }
 
 .history {
-  flex: 1;
-  min-height: 120px;
+  flex: 1 1 0;
+  min-height: 84px;
+  max-height: 124px;
   display: flex;
   flex-direction: column;
+  padding-bottom: 6px;
 }
 
 #history {
@@ -382,10 +418,16 @@ button:disabled {
   width: 100%;
 }
 
-/* --- Frequenzen --- */
+.card-head .card-note {
+  margin-right: 2px;
+}
+
+/* --- Frequencies --- */
 
 .peaks {
   flex: none;
+  padding-top: 8px;
+  padding-bottom: 6px;
 }
 
 .peak-list {
@@ -397,11 +439,11 @@ button:disabled {
 .peak-list li {
   position: relative;
   display: grid;
-  grid-template-columns: 26px 1fr auto auto;
+  grid-template-columns: 22px 1fr auto auto;
   align-items: baseline;
   gap: 10px;
-  padding: 4px 6px;
-  border-radius: 8px;
+  padding: 2px 6px;
+  border-radius: 7px;
   overflow: hidden;
 }
 
@@ -416,14 +458,14 @@ button:disabled {
 }
 
 .peak-list .rank {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   display: inline-grid;
   place-items: center;
   border-radius: 50%;
   background: var(--amber);
   color: #1c1917;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   align-self: center;
 }
@@ -434,26 +476,26 @@ button:disabled {
 }
 
 .peak-list .hz {
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 600;
 }
 
 .peak-list .meta {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted);
 }
 
 .peak-list .db {
-  min-width: 64px;
+  min-width: 60px;
   text-align: right;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
 }
 
 .scope {
   position: relative;
-  flex: 1;
-  min-height: 200px;
+  flex: 2 1 0;
+  min-height: 170px;
   padding: 0;
   overflow: hidden;
 }
@@ -479,18 +521,17 @@ button:disabled {
   display: block;
 }
 
-/* --- Aufnahmen --- */
+/* --- Recordings sheet --- */
 
-.recs {
-  flex: 1;
-  min-height: 0;
+.sheet-head {
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .rec-list {
-  flex: 1;
-  min-height: 0;
+  max-height: 55dvh;
   overflow-y: auto;
   list-style: none;
   margin: 0 -6px;
@@ -544,33 +585,6 @@ button:disabled {
 .rec-empty {
   color: var(--muted);
   margin: 8px 2px;
-}
-
-/* --- Tabs --- */
-
-.tabs {
-  flex: none;
-  display: flex;
-  margin: 0 -14px;
-  padding: 6px 8px calc(env(safe-area-inset-bottom) + 6px);
-  border-top: 1px solid var(--border);
-  background: var(--bg);
-}
-
-.tab {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 0;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--faint);
-}
-
-.tab[aria-selected='true'] {
-  color: var(--accent);
 }
 
 /* --- Start overlay --- */
@@ -728,13 +742,19 @@ button:disabled {
   color: var(--accent);
 }
 
-/* Short screens: tighter hero. */
-@media (max-height: 700px) {
-  .now {
-    font-size: 64px;
+/* Short screens (iPhone SE and the like): the history chart gives way to
+   the spectrum; its header with duration and reset stays. */
+@media (max-height: 720px) {
+  .history {
+    flex: none;
+    min-height: 0;
   }
 
-  .tile.big .value {
-    font-size: 26px;
+  .history .card-head {
+    margin-bottom: 0;
+  }
+
+  #history {
+    display: none;
   }
 }

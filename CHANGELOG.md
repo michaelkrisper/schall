@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-10-20
+
+### Changed
+
+- Level and frequencies on one screen: current level with weighting, bar,
+  average, maximum, minimum and peak in one row, a compact history with
+  duration and "Neu starten", the strongest frequencies, and spectrum and
+  spectrogram in the remaining space. No tab bar any more.
+- Recordings open as a sheet from a button in the top bar, which shows how
+  many there are. Closing the sheet stops playback.
+- On short screens (under 720 px) the history chart gives way to the
+  spectrum; its header with duration and reset stays.
+
 ## [1.1.3] - 2026-10-20
 
 ### Fixed
@@ -79,6 +92,7 @@ First release.
   headless Chrome with a fake microphone. CI builds, lints (Biome, rustfmt,
   clippy), tests and deploys to GitHub Pages.
 
+[1.2.0]: https://github.com/michaelkrisper/schall/compare/v1.1.3...v1.2.0
 [1.1.3]: https://github.com/michaelkrisper/schall/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/michaelkrisper/schall/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/michaelkrisper/schall/compare/v1.1.0...v1.1.1

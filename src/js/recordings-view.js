@@ -1,4 +1,4 @@
-// Aufnahmen tab: the saved recordings with playback, download and delete.
+// Recordings sheet: the saved recordings with playback, download and delete.
 
 import { formatDb, formatDuration } from './dsp.js';
 import { deleteRecording, listRecordings, recordingFile } from './recorder.js';
@@ -22,7 +22,7 @@ const icon = (name) => `<svg class="glyph" viewBox="0 0 24 24" aria-hidden="true
 // On phones the share sheet is the way to "Save to Files"; desktops download.
 const shareFiles = () => matchMedia('(pointer: coarse)').matches && navigator.canShare;
 
-export function createRecordingsView({ onPlay, onPlayEnd }) {
+export function createRecordingsView({ onPlay, onPlayEnd, onCount }) {
   const list = $('rec-list');
   const empty = $('rec-empty');
   const usage = $('rec-usage');
@@ -113,6 +113,7 @@ export function createRecordingsView({ onPlay, onPlayEnd }) {
       list.append(item);
     }
     const bytes = rows.reduce((sum, r) => sum + r.samples * 2, 0);
+    onCount(rows.length);
     const count = rows.length === 1 ? '1 Aufnahme' : `${rows.length} Aufnahmen`;
     usage.textContent = rows.length ? `${count} · ${(bytes / 1e6).toFixed(1).replace('.', ',')} MB` : '';
   }
