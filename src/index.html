@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Schall</title>
+<meta name="description" content="Schallpegelmesser und Frequenzanalyse im Browser: Durchschnitt, Maximum und die stärksten Frequenzen, mit Aufnahme.">
+<meta name="theme-color" content="#08090c">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Schall">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+<link rel="preload" href="dsp.wasm" as="fetch" type="application/wasm" crossorigin>
+<link rel="modulepreload" href="js/dsp.js">
+<link rel="modulepreload" href="js/stats.js">
+<link rel="modulepreload" href="js/audio.js">
+<link rel="modulepreload" href="js/settings.js">
+<link rel="modulepreload" href="js/level-view.js">
+<link rel="modulepreload" href="js/spectrum-view.js">
+<link rel="modulepreload" href="js/recorder.js">
+<link rel="modulepreload" href="js/recordings-view.js">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1 class="brand">Schall</h1>
+    <span id="status" class="status"></span>
+    <button id="record" class="icon-btn record" type="button" aria-label="Aufnehmen" disabled>
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><circle class="i-rec" cx="12" cy="12" r="6"/><rect class="i-stop" x="7" y="7" width="10" height="10" rx="2"/></svg>
+    </button>
+    <button id="toggle" class="icon-btn" type="button" aria-label="Pause">
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M8.5 5v14M15.5 5v14"/><path class="i-play" d="M7 4.5v15l12-7.5Z"/></svg>
+    </button>
+    <button id="settings-btn" class="icon-btn" type="button" aria-label="Einstellungen">
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+    </button>
+  </header>
+
+  <main id="view-level" class="view view-level">
+    <section class="hero">
+      <div class="modes">
+        <button id="weighting" class="chip" type="button" aria-label="Frequenzbewertung wechseln">dB(A)</button>
+        <button id="timing" class="chip" type="button" aria-label="Zeitbewertung wechseln">Fast</button>
+      </div>
+      <div class="now"><span id="now">–</span><span class="unit">dB</span></div>
+      <div id="class" class="class">&nbsp;</div>
+      <div class="meter" aria-hidden="true">
+        <div class="meter-track"><div id="meter-fill" class="meter-fill"></div><div id="meter-max" class="meter-max" hidden></div></div>
+        <div class="meter-scale"><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span><span>120</span></div>
+      </div>
+    </section>
+    <section class="stats">
+      <div class="tile big"><span class="label">Durchschnitt</span><span id="leq" class="value">–</span><span id="leq-name" class="name">LAeq</span></div>
+      <div class="tile big"><span class="label">Maximum</span><span id="max" class="value">–</span><span id="max-name" class="name">LAFmax</span></div>
+      <div class="tile"><span class="label">Minimum</span><span id="min" class="value">–</span></div>
+      <div class="tile"><span class="label">Spitze</span><span id="peak" class="value">–</span></div>
+      <div class="tile"><span class="label">Dauer</span><span id="duration" class="value">0:00</span></div>
+    </section>
+    <section class="card history">
+      <div class="card-head">
+        <span class="card-title">Verlauf</span>
+        <button id="range" class="chip small" type="button" aria-label="Zeitraum wechseln">60 s</button>
+        <button class="reset chip small" type="button">Neu starten</button>
+      </div>
+      <canvas id="history"></canvas>
+    </section>
+  </main>
+
+  <main id="view-spectrum" class="view view-spectrum" hidden>
+    <section class="card peaks">
+      <div class="card-head">
+        <span class="card-title">Stärkste Frequenzen</span>
+        <button id="averaging" class="chip small" type="button" aria-label="Mittelung wechseln">Ø 10 s</button>
+        <button class="reset chip small" type="button">Neu</button>
+      </div>
+      <ol id="peak-list" class="peak-list"></ol>
+    </section>
+    <section class="card scope">
+      <canvas id="scope-gl"></canvas>
+      <canvas id="scope-overlay"></canvas>
+      <p class="no-gl-text">Für Spektrum und Spektrogramm braucht es WebGL2.</p>
+    </section>
+  </main>
+
+  <main id="view-recordings" class="view view-recordings" hidden>
+    <section class="card recs">
+      <div class="card-head">
+        <span class="card-title">Aufnahmen</span>
+        <span id="rec-usage" class="card-note"></span>
+      </div>
+      <p id="rec-empty" class="rec-empty">Noch keine Aufnahmen. Während der Messung nimmt der rote Knopf oben auf.</p>
+      <ul id="rec-list" class="rec-list"></ul>
+    </section>
+  </main>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" type="button" role="tab" data-view="level" aria-selected="true">
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V6M15 20v-9M20 20V9"/></svg>Pegel
+    </button>
+    <button class="tab" type="button" role="tab" data-view="spectrum" aria-selected="false">
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18c2 0 2-10 4-10s2 7 4 7 2-11 4-11 2 9 4 9 1.5-3 2-3"/></svg>Frequenzen
+    </button>
+    <button class="tab" type="button" role="tab" data-view="recordings" aria-selected="false">
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg>Aufnahmen
+    </button>
+  </nav>
+</div>
+
+<div id="start" class="start">
+  <div class="start-box">
+    <svg class="start-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg>
+    <h2>Schall</h2>
+    <p>Lautstärke messen und die stärksten Frequenzen finden.</p>
+    <button id="start-btn" class="primary" type="button">Messung starten</button>
+    <p id="start-error" class="error" hidden></p>
+    <p class="hint">Das Mikrofon wird nur auf diesem Gerät ausgewertet. Nichts verlässt das Gerät, Aufnahmen bleiben im Speicher des Browsers.</p>
+  </div>
+</div>
+
+<dialog id="settings" class="sheet">
+  <form method="dialog">
+    <h2>Einstellungen</h2>
+    <section>
+      <h3>Kalibrierung <span id="cal-state" class="cal-state"></span></h3>
+      <p>Handy-Mikrofone sind nicht geeicht, die Werte können um einige dB danebenliegen. Zum Abgleichen das Handy neben ein Messgerät (oder eine geprüfte Mess-App wie NIOSH SLM) halten, ein gleichmäßiges Geräusch laufen lassen und dessen Anzeige eintragen.</p>
+      <div class="row">
+        <label for="cal-ref">Referenz zeigt</label>
+        <input id="cal-ref" type="text" inputmode="decimal" autocomplete="off" placeholder="z. B. 62,5">
+        <button id="cal-apply" class="chip" type="button">Abgleichen</button>
+      </div>
+      <div class="row">
+        <span>Korrektur</span>
+        <button id="cal-minus" class="chip" type="button" aria-label="0,5 dB weniger">−</button>
+        <output id="cal-value">+100,0 dB</output>
+        <button id="cal-plus" class="chip" type="button" aria-label="0,5 dB mehr">+</button>
+      </div>
+      <button id="cal-reset" class="link" type="button">Auf Standardwert zurücksetzen</button>
+    </section>
+    <section>
+      <h3>Was die Werte bedeuten</h3>
+      <dl>
+        <dt>Durchschnitt (Leq)</dt><dd>Energetischer Mittelwert seit „Neu starten“, wie bei Lärmmessungen üblich.</dd>
+        <dt>Maximum</dt><dd>Höchster Pegel mit der gewählten Zeitbewertung. Spitze: höchster Momentanwert.</dd>
+        <dt>dB(A) · dB(C) · dB(Z)</dt><dd>A wie das Gehör empfindet (Standard für Lärm), C fast linear für tiefe Töne, Z unbewertet.</dd>
+        <dt>Fast · Slow</dt><dd>125 ms folgt schnellen Änderungen, 1 s zeigt ruhiger an.</dd>
+        <dt>Stärkste Frequenzen</dt><dd>Aus dem gemittelten Spektrum (FFT mit 16384 Punkten, ca. 3 Hz Auflösung). „2× ①“ heißt: doppelte Frequenz von Nummer 1, typisch für Motoren und Lüfter.</dd>
+      </dl>
+    </section>
+    <p class="about">Schall · <a href="https://github.com/michaelkrisper/schall">Quellcode</a> · MIT-Lizenz</p>
+    <button class="primary" value="close">Fertig</button>
+  </form>
+</dialog>
+</body>
+</html>

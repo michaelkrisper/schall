@@ -1,0 +1,30 @@
+{
+  "name": "schall",
+  "version": "1.0.0",
+  "description": "Sound level meter and frequency analyser PWA: average and maximum level, the strongest frequencies, recordings. DSP in Rust/WebAssembly SIMD, drawing in WebGL2.",
+  "homepage": "https://michaelkrisper.github.io/schall/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michaelkrisper/schall.git"
+  },
+  "bugs": "https://github.com/michaelkrisper/schall/issues",
+  "author": "Michael Krisper",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "serve": "node scripts/serve.mjs",
+    "wasm": "node scripts/build-wasm.mjs",
+    "icons": "node scripts/build-icons.mjs",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "test": "node --test \"test/*.test.js\"",
+    "check": "npm run lint && npm test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15"
+  }
+}
