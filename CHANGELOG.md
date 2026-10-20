@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-10-20
+
+### Changed
+
+- Less work on the main thread during long measurements (profiled on a
+  Pixel 4a 5G): the spectrum rows are only sent while the frequency tab is
+  open, the level bar updates with new levels (20/s) instead of every frame,
+  and the history chart redraws only when it would move by a pixel.
+
+### Added
+
+- Browser test that the app starts and measures offline, from its service
+  worker, with the server gone.
+
 ## [1.1.0] - 2026-10-20
 
 ### Added
@@ -50,5 +64,6 @@ First release.
   headless Chrome with a fake microphone. CI builds, lints (Biome, rustfmt,
   clippy), tests and deploys to GitHub Pages.
 
+[1.1.1]: https://github.com/michaelkrisper/schall/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/michaelkrisper/schall/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/michaelkrisper/schall/releases/tag/v1.0.0

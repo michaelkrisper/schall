@@ -449,6 +449,7 @@ export function createSpectrumView() {
       cols = 0;
       maxHz = Math.min(20000, audio.sampleRate / 2);
       tracker = new ToneTracker(audio.binHz);
+      audio.send({ type: 'rows', on: visible });
       peaks = [];
       harm = [];
       renderList();
@@ -460,6 +461,7 @@ export function createSpectrumView() {
     show(on, s) {
       visible = on;
       settings = s;
+      audio?.send({ type: 'rows', on });
       if (on) {
         resize();
         drawGl();

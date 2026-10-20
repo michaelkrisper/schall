@@ -130,7 +130,8 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
 
   before(async () => {
     server = await serve();
-    const origin = `http://127.0.0.1:${server.address().port}`;
+    // Not localhost, so the app registers its service worker (offline test).
+    const origin = `http://schall.test:${server.address().port}`;
     work = mkdtempSync(join(tmpdir(), 'schall-chrome-'));
     const wav = join(work, 'tones.wav');
     toneFile(wav);
@@ -144,6 +145,8 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
       '--use-fake-device-for-media-stream',
       `--use-file-for-fake-audio-capture=${wav}`,
       '--autoplay-policy=no-user-gesture-required',
+      '--host-resolver-rules=MAP schall.test 127.0.0.1',
+      `--unsafely-treat-insecure-origin-as-secure=${origin}`,
       '--remote-debugging-port=0',
       `--user-data-dir=${join(work, 'profile')}`,
       'about:blank',
@@ -185,7 +188,7 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
       browser.kill();
       await exited;
     }
-    server?.close();
+    if (server?.listening) server.close();
     // Chrome's helper processes may still be writing for a moment.
     if (work) rmSync(work, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   });
@@ -371,6 +374,21 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     assert.equal(await evaluate(`document.getElementById('view-spectrum').hidden`), false);
     // The microphone is already allowed, so measuring resumes without a tap.
     await waitFor(`document.body.dataset.state === 'running'`);
+  });
+
+  it('works offline from its service worker', async () => {
+    await waitFor(`!!navigator.serviceWorker.controller`);
+    await new Promise((resolve) => {
+      server.closeAllConnections();
+      server.close(resolve);
+    });
+    await evaluate('window.beforeReload = true');
+    await page('Page.reload');
+    await waitFor(`!window.beforeReload && !!window.schall`);
+    await waitFor(`document.body.dataset.state === 'running'`);
+    await sleep(1500);
+    assert.ok(await evaluate('Number.isFinite(window.schall.stats.leq(0))'), 'measures without a server');
+    await waitFor(`document.querySelector('#peak-list li:not(.empty) .hz')?.textContent.endsWith('Hz')`);
   });
 
   it('logged no errors', () => {

@@ -79,8 +79,10 @@ an aircraft cabin. Record it, play it back, keep it as a WAV file.
 
 **App**
 
-- Installable PWA, works offline, keeps the screen on while measuring, no
-  zooming or text selection: it behaves like a native app.
+- Installable PWA that works fully offline once opened (everything, the
+  WebAssembly core included, is cached by a service worker), keeps the screen
+  on while measuring, no zooming or text selection: it behaves like a native
+  app.
 - Calibration against a reference reading in one step.
 - No account, no backend, no tracking.
 
@@ -232,7 +234,7 @@ files ([deploy.yml](.github/workflows/deploy.yml)).
 
 ## Testing
 
-67 tests with Node's built-in test runner, no test dependencies:
+68 tests with Node's built-in test runner, no test dependencies:
 
 | File | Tests | Covers |
 | --- | --- | --- |
@@ -240,7 +242,7 @@ files ([deploy.yml](.github/workflows/deploy.yml)).
 | [`test/dsp.test.js`](test/dsp.test.js) | 17 | Filter design against the IEC 61672 table and curves, notes, peak finding, formatting, statistics and history ring, WAV header and file names |
 | [`test/tracker.test.js`](test/tracker.test.js) | 5 | Tone tracker: steady before transient, louder-but-mostly-there first, drift, windows, and a hum among loud bursts on the real core |
 | [`test/structure.test.js`](test/structure.test.js) | 8 | Offline cache and module preloads complete, element ids exist, icon sizes, Rust and JavaScript agree on buffer layouts, versions match |
-| [`test/app.test.js`](test/app.test.js) | 13 | The app in headless Chrome with a fake microphone playing two known tones: levels on screen, the frequency list, the WebGL spectrogram, averaging, recording and the WAV file, playback, delete, calibration, pause, history range, no zoom, settings after a reload, no console errors |
+| [`test/app.test.js`](test/app.test.js) | 14 | The app in headless Chrome with a fake microphone playing two known tones: levels on screen, the frequency list, the WebGL spectrogram, averaging, recording and the WAV file, playback, delete, calibration, pause, history range, no zoom, settings after a reload, offline start from the service worker, no console errors |
 
 The browser test is skipped when no Chrome is installed (set `CHROME` to its
 path otherwise).

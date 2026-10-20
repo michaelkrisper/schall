@@ -1,6 +1,6 @@
 {
   "name": "schall",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Sound level meter and frequency analyser PWA: average and maximum level, the strongest frequencies, recordings. DSP in Rust/WebAssembly SIMD, drawing in WebGL2.",
   "keywords": [
     "sound-level-meter",

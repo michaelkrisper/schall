@@ -17,6 +17,7 @@ class SchallProcessor extends AudioWorkletProcessor {
     this.input = new Float32Array(memory, exports.input_ptr(), MAX_BLOCK);
     this.report = new Float64Array(memory, exports.report_ptr(), REPORT_LENGTH);
     this.cols = 0;
+    this.rows = true;
     this.port.onmessage = ({ data }) => this.command(data);
   }
 
@@ -27,6 +28,9 @@ class SchallProcessor extends AudioWorkletProcessor {
       this.cols = dsp.columns(data.edges.length / 2) === 0 ? data.edges.length / 2 : 0;
       this.live = new Float32Array(dsp.memory.buffer, dsp.live_ptr(), this.cols);
       this.average = new Float32Array(dsp.memory.buffer, dsp.average_ptr(), this.cols);
+    } else if (data.type === 'rows') {
+      // Display rows only while the spectrum is on screen.
+      this.rows = data.on;
     } else if (data.type === 'mode') {
       dsp.set_mode(data.mode);
     } else if (data.type === 'reset') {
@@ -74,7 +78,7 @@ class SchallProcessor extends AudioWorkletProcessor {
       const report = this.report.slice();
       this.port.postMessage({ type: 'level', report }, [report.buffer]);
     }
-    if (flags & 2 && this.cols) {
+    if (flags & 2 && this.cols && this.rows) {
       const live = this.live.slice();
       const average = this.average.slice();
       this.port.postMessage({ type: 'spectrum', live, average }, [live.buffer, average.buffer]);

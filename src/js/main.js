@@ -240,12 +240,11 @@ function changed() {
 function loop(now) {
   requestAnimationFrame(loop);
   if (state !== 'running') return;
-  if (settings.view === 'level') {
+  // New levels come 20 times a second; between them there is nothing to do.
+  if (settings.view === 'level' && levelDirty) {
+    levelDirty = false;
     level.frame(stats, settings, now);
-    if (levelDirty) {
-      level.draw(stats, settings);
-      levelDirty = false;
-    }
+    level.chart(stats, settings, now);
   }
   spectrum.frame(now, settings);
   if (recording && now - status.at > 250) status(now);

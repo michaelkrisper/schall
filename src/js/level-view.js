@@ -30,6 +30,7 @@ export function createLevelView() {
   };
   const ctx = el.canvas.getContext('2d');
   let textAt = 0;
+  let drawnAt = 0;
 
   const bar = (db) => Math.min(1, Math.max(0, (db - BAR_MIN) / (BAR_MAX - BAR_MIN)));
 
@@ -171,5 +172,12 @@ export function createLevelView() {
       }
     },
     draw,
+    /** The chart, but only once it would have moved by a pixel (saves battery on long runs). */
+    chart(stats, s, now) {
+      const width = Math.max(1, el.canvas.clientWidth - 26);
+      if (now - drawnAt < Math.max(100, (s.range * 1000) / width)) return;
+      drawnAt = now;
+      draw(stats, s);
+    },
   };
 }
