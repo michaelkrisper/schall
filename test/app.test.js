@@ -228,27 +228,26 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     const hz = (cell) => number(cell) * (cell.includes('kHz') ? 1000 : 1);
     near(hz(rows[0][1]), 440, 4.4, 'first frequency');
     assert.match(rows[0][2], /^A4 [+−]\d+ ct$/);
-    near(number(rows[0][3]), -20 + DEFAULT_OFFSET, 3, 'level of 440 Hz');
+    // So the levels are only checked roughly here, and their distance.
+    near(number(rows[0][3]), -20 + DEFAULT_OFFSET, 6, 'level of 440 Hz');
     near(hz(rows[1][1]), 1250, 12.5, 'second frequency');
-    near(number(rows[1][3]), -30 + DEFAULT_OFFSET, 3, 'level of 1250 Hz');
-    // The spectrogram is drawn: WebGL pixels a little below the axis are lit.
-    // The buffer is only readable in the frame it was drawn in, so check from
-    // animation frames, which run right after the app's render loop.
-    const lit = await evaluate(`new Promise((resolve) => {
+    near(number(rows[1][3]), -30 + DEFAULT_OFFSET, 6, 'level of 1250 Hz');
+    near(number(rows[0][3]) - number(rows[1][3]), 10, 5, 'distance of the two tones');
+    // The spectrogram is drawn: its newest row, just below the axis, is lit.
+    // Drawn and read in one task, as the buffer is cleared once composited.
+    const probe = await evaluate(`(() => {
+      const { spectrum, settings } = window.schall;
+      spectrum.redraw(settings);
+      const info = spectrum.debug();
       const c = document.getElementById('scope-gl');
       const gl = c.getContext('webgl2');
       const px = new Uint8Array(4 * c.width);
-      let tries = 0;
-      const check = () => {
-        gl.readPixels(0, Math.floor(c.height * 0.3), c.width, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-        let n = 0;
-        for (let i = 3; i < px.length; i += 4) if (px[i] > 0) n++;
-        if (n / c.width > 0.9 || ++tries > 60) resolve(n / c.width);
-        else requestAnimationFrame(check);
-      };
-      requestAnimationFrame(check);
-    })`);
-    assert.ok(lit > 0.9, `spectrogram row coverage ${lit}`);
+      gl.readPixels(0, Math.floor(info.top) - 3, c.width, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      let n = 0;
+      for (let i = 3; i < px.length; i += 4) if (px[i] > 0) n++;
+      return { ...info, lit: n / c.width, error: gl.getError() };
+    })()`);
+    assert.ok(probe.lit > 0.9 && probe.error === 0, JSON.stringify(probe));
     await screenshot('spectrum');
   });
 

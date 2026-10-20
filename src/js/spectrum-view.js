@@ -501,5 +501,9 @@ export function createSpectrumView() {
       drawGl();
       drawOverlay();
     },
+    /** For the browser test: state and the spectrogram's top edge in GL pixels. */
+    debug() {
+      return { gl: !!gl, cols, filled, top: (cssH - spectrumHeight() - AXIS) * dpr };
+    },
   };
 }

@@ -352,6 +352,7 @@ if ('serviceWorker' in navigator && !['localhost', '127.0.0.1'].includes(locatio
 // Open for the browser test and the console.
 window.schall = {
   settings,
+  spectrum,
   get stats() {
     return stats;
   },
