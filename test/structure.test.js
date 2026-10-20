@@ -21,6 +21,10 @@ describe('app shell', () => {
     }
   });
 
+  it('removes only its own old caches (other apps share the origin)', () => {
+    assert.match(sw, /key\.startsWith\('schall-'\) && key !== CACHE/);
+  });
+
   it('caches only files that exist', () => {
     for (const file of shell.filter((f) => f !== './')) {
       assert.doesNotThrow(() => readFileSync(new URL(`../src/${file}`, import.meta.url)), file);

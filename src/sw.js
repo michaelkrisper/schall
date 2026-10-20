@@ -1,6 +1,7 @@
 // App shell cache. The deploy workflow replaces __VERSION__ with the commit,
 // so every release installs a fresh cache. Recordings live in IndexedDB, not
-// here.
+// here. Other apps share the origin (michaelkrisper.github.io) and with it the
+// cache storage, so only this app's old caches are removed.
 
 const VERSION = '__VERSION__';
 const CACHE = `schall-${VERSION}`;
@@ -40,7 +41,11 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      .then((keys) =>
+        Promise.all(
+          keys.filter((key) => key.startsWith('schall-') && key !== CACHE).map((key) => caches.delete(key)),
+        ),
+      )
       .then(() => self.clients.claim()),
   );
 });

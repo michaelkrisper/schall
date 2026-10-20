@@ -81,7 +81,9 @@ async function keepAwake(on) {
 
 // --- Audio ---
 
-async function start() {
+// `auto`: started without a tap (microphone already allowed). If that fails,
+// e.g. because the screen was off, the start button just waits for a tap.
+async function start(auto = false) {
   if (audio) {
     // Suspended by the system (autoplay rule, phone call): a tap resumes it.
     userPaused = false;
@@ -104,8 +106,8 @@ async function start() {
       onEnded: () => stop('Das Mikrofon wurde getrennt.'),
     });
   } catch (error) {
-    console.error(error);
-    setState('idle', errorText(error));
+    if (!auto) console.error(error);
+    setState('idle', auto ? '' : errorText(error));
     return;
   }
   stats = new LevelStats({ reportSeconds: REPORT_SECONDS });
@@ -285,7 +287,7 @@ function applyReference() {
 
 // --- Events ---
 
-$('start-btn').addEventListener('click', start);
+$('start-btn').addEventListener('click', () => start());
 $('toggle').addEventListener('click', togglePause);
 $('record').addEventListener('click', toggleRecording);
 for (const button of document.querySelectorAll('.reset')) button.addEventListener('click', reset);
@@ -348,6 +350,7 @@ document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: fals
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
   if (audio && !userPaused && audio.ctx.state !== 'running') audio.ctx.resume().catch(() => {});
+  if (!audio && state === 'idle') autoStart();
   keepAwake(state === 'running');
 });
 
@@ -366,10 +369,13 @@ loadDsp().catch((error) => setState('idle', errorText(error)));
 
 // With the microphone already allowed, start right away; on iOS the audio
 // may still wait for a tap, which the overlay then asks for.
-navigator.permissions
-  ?.query({ name: 'microphone' })
-  .then((p) => p.state === 'granted' && start())
-  .catch(() => {});
+function autoStart() {
+  navigator.permissions
+    ?.query({ name: 'microphone' })
+    .then((p) => p.state === 'granted' && start(true))
+    .catch(() => {});
+}
+autoStart();
 
 if ('serviceWorker' in navigator && !['localhost', '127.0.0.1'].includes(location.hostname)) {
   navigator.serviceWorker.register('sw.js');

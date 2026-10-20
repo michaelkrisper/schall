@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-10-20
+
+### Fixed
+
+- Updating the app deleted the offline caches of other apps on the same
+  origin (michaelkrisper.github.io); it now removes only its own.
+- A start without a tap that the browser refuses (e.g. screen off) no longer
+  shows "Kein Zugriff aufs Mikrofon"; the app tries again when it is visible.
+
 ## [1.2.0] - 2026-10-20
 
 ### Changed
@@ -92,6 +101,7 @@ First release.
   headless Chrome with a fake microphone. CI builds, lints (Biome, rustfmt,
   clippy), tests and deploys to GitHub Pages.
 
+[1.2.1]: https://github.com/michaelkrisper/schall/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/michaelkrisper/schall/compare/v1.1.3...v1.2.0
 [1.1.3]: https://github.com/michaelkrisper/schall/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/michaelkrisper/schall/compare/v1.1.1...v1.1.2
