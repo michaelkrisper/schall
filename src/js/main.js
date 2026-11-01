@@ -5,7 +5,7 @@ import { formatDb, formatDuration, REPORT_SECONDS } from './dsp.js';
 import { createLevelView } from './level-view.js';
 import { startRecording } from './recorder.js';
 import { createRecordingsView } from './recordings-view.js';
-import { DEFAULT_OFFSET, loadSettings, saveSettings } from './settings.js';
+import { DEFAULT_OFFSET, loadSettings, SPANS, saveSettings } from './settings.js';
 import { createSpectrumView } from './spectrum-view.js';
 import { LevelStats, WEIGHTINGS } from './stats.js';
 
@@ -94,7 +94,7 @@ async function start(auto = false) {
   setState('starting');
   try {
     audio = await startAudio({
-      mode: settings.averaging,
+      mode: settings.span,
       onLevel,
       onSpectrum: (live, avg) => {
         spectrum.onSpectrum(live, avg);
@@ -180,7 +180,10 @@ async function toggleRecording() {
   }
   try {
     const writer = await startRecording({ sampleRate: audio.sampleRate, offset: settings.offset });
-    recording = { writer, stats: new LevelStats({ reportSeconds: REPORT_SECONDS, settleSeconds: 0 }) };
+    recording = {
+      writer,
+      stats: new LevelStats({ reportSeconds: REPORT_SECONDS, historySeconds: 1, settleSeconds: 0 }),
+    };
     document.body.classList.add('recording');
     audio.send({ type: 'record', on: true });
     status();
@@ -296,23 +299,13 @@ $('recordings-btn').addEventListener('click', () => {
   $('recordings').showModal();
 });
 $('recordings').addEventListener('close', () => recordings.stopPlayer());
-$('weighting').addEventListener('click', () => {
-  settings.weighting = (settings.weighting + 1) % 3;
-  changed();
-});
-$('timing').addEventListener('click', () => {
-  settings.time = (settings.time + 1) % 2;
-  changed();
-});
-$('range').addEventListener('click', () => {
-  settings.range = settings.range === 60 ? 600 : 60;
-  changed();
-});
-$('averaging').addEventListener('click', () => {
-  settings.averaging = (settings.averaging + 1) % 3;
-  audio?.send({ type: 'mode', mode: settings.averaging });
+// One span for the strongest frequencies (and the DSP core's average) and the history chart.
+$('averaging').addEventListener('click', (e) => {
+  e.stopPropagation(); // not a tap that enlarges the card
+  settings.span = (settings.span + 1) % SPANS.length;
+  audio?.send({ type: 'mode', mode: settings.span });
   averagingLabel();
-  saveSettings(settings);
+  changed();
 });
 $('settings-btn').addEventListener('click', () => {
   calibration();
@@ -355,7 +348,8 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function averagingLabel() {
-  $('averaging').textContent = ['Ø 1 s', 'Ø 10 s', 'Ø gesamt'][settings.averaging];
+  const span = SPANS[settings.span];
+  $('averaging').textContent = Number.isFinite(span) ? `Ø ${span} s` : 'Ø gesamt';
 }
 
 // --- Start-up ---

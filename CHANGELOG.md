@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-11-01
+
+### Changed
+
+- The level is shown on a dial: the needle for the current level, a bright arc
+  from minimum to maximum, a triangle for the average.
+- Always dB(A) with Fast; the weighting and timing buttons are gone.
+- The strongest frequencies span 1 s, 10 s, 30 s, 60 s or everything since the
+  restart, and the history chart shows the same span (up to an hour).
+- "Neu starten" moved to the top bar.
+
+### Added
+
+- A tap on the strongest frequencies or on the spectrum enlarges it to the
+  whole screen; hold or drag on the spectrum for the cursor.
+
 ## [1.2.1] - 2026-10-20
 
 ### Fixed
@@ -101,6 +117,7 @@ First release.
   headless Chrome with a fake microphone. CI builds, lints (Biome, rustfmt,
   clippy), tests and deploys to GitHub Pages.
 
+[1.3.0]: https://github.com/michaelkrisper/schall/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/michaelkrisper/schall/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/michaelkrisper/schall/compare/v1.1.3...v1.2.0
 [1.1.3]: https://github.com/michaelkrisper/schall/compare/v1.1.2...v1.1.3

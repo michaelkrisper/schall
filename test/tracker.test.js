@@ -81,7 +81,7 @@ describe('tone tracker', () => {
       [150],
       'within 10 s only the newer tone',
     );
-    const total = tracker.ranked(WINDOWS[2]);
+    const total = tracker.ranked(WINDOWS[4]);
     assert.deepEqual(
       total.map((t) => Math.round(t.hz)),
       [150, 700],
@@ -90,7 +90,7 @@ describe('tone tracker', () => {
     assert.ok(Math.abs(total[1].presence - 1 / 3) < 1e-9);
     assert.equal(total[1].level, -35);
     tracker.reset();
-    assert.deepEqual(tracker.ranked(WINDOWS[2]), []);
+    assert.deepEqual(tracker.ranked(WINDOWS[4]), []);
   });
 
   it('finds the steady hum among loud bursts on the real DSP core', async () => {

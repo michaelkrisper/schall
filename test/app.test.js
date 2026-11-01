@@ -199,21 +199,29 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     assert.equal(await text('#status'), 'Misst');
   });
 
-  it('shows the level of the tones in dB(A), C and Z', async () => {
+  it('shows the level of the tones in dB(A) on the gauge', async () => {
     await sleep(3000);
-    const power = TONES.reduce((sum, [, db]) => sum + 10 ** (db / 10), 0);
     const expected = (w) =>
       powerToDb(TONES.reduce((sum, [hz, db]) => sum + 10 ** ((db + weightingCurve(w, hz)) / 10), 0)) +
       DEFAULT_OFFSET;
     near(number(await text('#leq')), expected('A'), 0.5, 'LAeq');
     near(number(await text('#now')), expected('A'), 0.5, 'LAF');
     near(number(await text('#max')), expected('A'), 0.6, 'LAFmax');
-    await click('#weighting');
-    await click('#weighting');
-    assert.equal(await text('#weighting'), 'dB(Z)');
-    near(number(await text('#leq')), powerToDb(power) + DEFAULT_OFFSET, 0.5, 'LZeq');
-    await click('#weighting');
     assert.equal(await text('#leq-name'), 'LAeq');
+    // Needle and average marker point at the level: 20..120 dB over 240°.
+    const angle = (db) => (240 * (db - 20)) / 100 - 120;
+    const gauge = await evaluate(`({
+      needle: getComputedStyle(document.getElementById('gauge-needle')).transform,
+      avg: document.getElementById('gauge-avg').getAttribute('transform'),
+      range: !document.getElementById('gauge-range').hasAttribute('hidden'),
+    })`);
+    const [a, b] = gauge.needle
+      .match(/matrix\(([^,]+), ([^,]+)/)
+      .slice(1)
+      .map(Number);
+    near((Math.atan2(b, a) * 180) / Math.PI, angle(expected('A')), 3, 'needle');
+    near(number(gauge.avg.match(/rotate\(([-\d.]+)/)[1]), angle(expected('A')), 2, 'average marker');
+    assert.ok(gauge.range, 'min-max arc shown');
   });
 
   it('lists the two tones as the strongest frequencies', async () => {
@@ -256,7 +264,7 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     const layout = await evaluate(`(() => {
       const box = (s) => { const r = document.querySelector(s).getBoundingClientRect(); return { top: r.top, bottom: r.bottom, h: r.height }; };
       return { inner: innerHeight, scroll: document.documentElement.scrollHeight,
-        parts: Object.fromEntries(['.top', '.hero', '.meter', '.stats', '.history', '.peaks', '.scope'].map((s) => [s, box(s)])) };
+        parts: Object.fromEntries(['.top', '.hero', '.stats', '.history', '.peaks', '.scope'].map((s) => [s, box(s)])) };
     })()`);
     assert.ok(layout.scroll <= layout.inner, `page scrolls: ${layout.scroll} > ${layout.inner}`);
     for (const [part, { bottom, h }] of Object.entries(layout.parts)) {
@@ -269,17 +277,46 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     assert.equal(await evaluate(`document.querySelectorAll('.tabs, .tab').length`), 0, 'no tab bar');
   });
 
-  it('switches the averaging and still finds the tones', async () => {
+  it('switches the span of frequencies and history together and still finds the tones', async () => {
     assert.equal(await text('#averaging'), 'Ø 10 s');
-    await click('#averaging');
-    assert.equal(await text('#averaging'), 'Ø gesamt');
-    await click('#averaging');
-    assert.equal(await text('#averaging'), 'Ø 1 s');
+    for (const label of ['Ø 30 s', 'Ø 60 s', 'Ø gesamt', 'Ø 1 s']) {
+      await click('#averaging');
+      assert.equal(await text('#averaging'), label);
+    }
+    assert.ok(
+      !(await evaluate(`document.querySelector('.peaks').classList.contains('max')`)),
+      'chip does not enlarge',
+    );
     await sleep(1500);
     const first = await text('#peak-list li:first-child .hz');
     near(number(first), 440, 4.4, 'strongest frequency with 1 s averaging');
     await click('#averaging');
     assert.equal(await text('#averaging'), 'Ø 10 s');
+  });
+
+  it('enlarges the strongest frequencies and the spectrum on a tap', async () => {
+    const full = (s) =>
+      evaluate(
+        `(() => { const r = document.querySelector('${s}').getBoundingClientRect(); return r.height > innerHeight * 0.8; })()`,
+      );
+    await click('.peaks');
+    assert.ok(await full('.peaks'), 'list enlarged');
+    await click('.peaks');
+    assert.ok(!(await full('.peaks')), 'list back');
+    const tap = async () => {
+      const { x, y } = await evaluate(`(() => {
+        const r = document.getElementById('scope-overlay').getBoundingClientRect();
+        return { x: r.left + 60, y: r.top + 60 };
+      })()`);
+      for (const type of ['mousePressed', 'mouseReleased']) {
+        await page('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
+      }
+      await sleep(300);
+    };
+    await tap();
+    assert.ok(await full('.scope'), 'spectrum enlarged');
+    await tap();
+    assert.ok(!(await full('.scope')), 'spectrum back');
   });
 
   it('records, lists and exports a WAV file', async () => {
@@ -352,12 +389,8 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     await waitFor(`document.body.dataset.state === 'running'`);
   });
 
-  it('switches the history range and starts over', async () => {
-    await click('#range');
-    assert.equal(await text('#range'), '10 min');
-    await click('#range');
-    assert.equal(await text('#range'), '60 s');
-    await click('.reset');
+  it('starts over from the top bar', async () => {
+    await click('.top .reset');
     await sleep(300);
     assert.equal(await text('#duration'), '0:00');
   });
@@ -377,17 +410,14 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
   });
 
   it('keeps the settings after a reload and starts again by itself', async () => {
-    await click('#weighting');
-    assert.equal(await text('#weighting'), 'dB(C)');
-    await click('#timing');
-    assert.equal(await text('#timing'), 'Slow');
+    await click('#averaging');
+    assert.equal(await text('#averaging'), 'Ø 30 s');
     await evaluate('window.beforeReload = true');
     await page('Page.reload');
     await waitFor(`!window.beforeReload && !!window.schall`);
-    assert.equal(await text('#weighting'), 'dB(C)');
-    assert.equal(await text('#timing'), 'Slow');
-    assert.equal(await text('#leq-name'), 'LCeq');
-    assert.equal(await text('#max-name'), 'LCSmax');
+    assert.equal(await text('#averaging'), 'Ø 30 s');
+    assert.equal(await text('#leq-name'), 'LAeq');
+    assert.equal(await text('#max-name'), 'LAFmax');
     // The microphone is already allowed, so measuring resumes without a tap.
     await waitFor(`document.body.dataset.state === 'running'`);
   });

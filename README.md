@@ -49,14 +49,15 @@ recordings and settings behind the buttons in the top bar.
 
 **Level**
 
-- Current level in large digits, with an everyday description ("Normales
-  Gespräch", "Starker Straßenverkehr") and a colour-coded bar.
+- Current level on a dial: the needle shows the level, a bright arc the range
+  from minimum to maximum, a triangle the average. In digits below, with an
+  everyday description ("Normales Gespräch", "Starker Straßenverkehr").
 - **Average (Leq)** and **maximum** since you started, plus minimum, peak and
   measuring time.
-- Frequency weighting A, C or Z and time weighting Fast (125 ms) or Slow
-  (1 s), as defined by IEC 61672-1.
-- History chart over the last minute or ten minutes, with the average marked
-  (on short screens it gives way to the spectrum).
+- dB(A) with time weighting Fast (125 ms), as defined by IEC 61672-1.
+- History chart over the same span as the strongest frequencies (1 s to 60 s
+  or since the start), with the average marked (on short screens it gives way
+  to the spectrum).
 
 **Frequencies**
 
@@ -65,12 +66,13 @@ recordings and settings behind the buttons in the top bar.
 - **History-aware ranking:** tones are followed over time and ranked by the
   level they reach at least half of the time, so a steady hum is found even
   when something louder comes and goes. A bar shows how steadily each tone is
-  there. The window is 1 s, 10 s or everything since "Neu".
+  there. The window is 1 s, 10 s, 30 s, 60 s or everything since the
+  restart. Tap the list to enlarge it.
 - **Harmonics** are marked ("3× ①" = three times the frequency of no. 1),
   which tells a motor's or fan's overtones from separate sources.
 - Live spectrum and averaged spectrum on a logarithmic 20 Hz - 20 kHz axis,
-  with numbered markers, and a spectrogram of the last ~11 seconds. Touch the
-  plot to read frequency, level and note anywhere.
+  with numbered markers, and a spectrogram of the last ~11 seconds. Tap the
+  plot to enlarge it; hold or drag to read frequency, level and note anywhere.
 
 **Recordings**
 
@@ -113,12 +115,12 @@ adjusted in 0.5 dB steps.
 
 ## Measuring well
 
-- **Average noise** (a room, a street, a neighbour): tap *Neu starten* (in
-  the history header), keep
+- **Average noise** (a room, a street, a neighbour): tap *Neu starten* (the
+  circular arrow in the top bar), keep
   the phone still and away from your body, and let it run. The average
   (LAeq) settles after a minute or two; the maximum shows the loudest moment.
 - **Main frequency of a machine, fan or engine:** set the averaging next to
-  *Stärkste Frequenzen* to *Ø 10 s* or *Ø gesamt* and wait a few seconds. Steady tones move to the top,
+  *Stärkste Frequenzen* to *Ø 10 s*, *Ø 60 s* or *Ø gesamt* and wait a few seconds. Steady tones move to the top,
   their harmonics are marked. In an aircraft cabin, a car or next to a fan,
   the first entries are the engine, blade or motor tones.
 - **Tuning or pitch:** the first entry shows the note and cents; with
@@ -139,7 +141,7 @@ microphone ─► AudioWorklet ─► dsp.wasm (Rust, no_std, SIMD128)
                                 ├─ real FFT, 16384 points, Blackman-Harris window, every ~21 ms:
                                 │    radix-4 stages with four butterflies per instruction,
                                 │    SIMD window + deinterleave, split into the real spectrum
-                                ├─ averages over 1 s, 10 s and since the reset, dB via a SIMD log
+                                ├─ averages over 1 s, 10-60 s and since the reset, dB via a SIMD log
                                 └─ max-pooling of 8192 bins into one value per display column
            ─► page: levels (20/s), display rows (47/s), full spectra (4/s)
                 ├─ statistics and history chart (Canvas 2D)

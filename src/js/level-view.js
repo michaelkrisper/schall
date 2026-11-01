@@ -1,21 +1,73 @@
-// Pegel tab: current level, bar, statistics and the history chart.
+// Level: the gauge (needle, min-max arc, average marker), statistics and the
+// history chart.
 
 import { formatDb, formatDuration, levelClass, levelZone } from './dsp.js';
+import { SPANS } from './settings.js';
 import { TIMES, WEIGHTINGS } from './stats.js';
 
 export const ZONE_COLORS = ['#34d399', '#facc15', '#fb923c', '#f43f5e'];
-const TIME_NAMES = ['Fast', 'Slow'];
-const BAR_MIN = 20;
-const BAR_MAX = 120;
+const ZONE_EDGES = [55, 70, 85];
+const DIAL_MIN = 20;
+const DIAL_MAX = 120;
+const SWEEP = 240; // degrees, symmetric around the top
+const CX = 100;
+const CY = 100;
+const SVG = 'http://www.w3.org/2000/svg';
 
 const $ = (id) => document.getElementById(id);
+
+const angleOf = (db) => SWEEP * (Math.min(1, Math.max(0, (db - DIAL_MIN) / (DIAL_MAX - DIAL_MIN))) - 0.5);
+
+function point(deg, r) {
+  const a = (deg * Math.PI) / 180;
+  return `${(CX + r * Math.sin(a)).toFixed(2)} ${(CY - r * Math.cos(a)).toFixed(2)}`;
+}
+
+function arc(db0, db1, r) {
+  const a0 = angleOf(db0);
+  const a1 = angleOf(db1);
+  return `M${point(a0, r)}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${point(a1, r)}`;
+}
+
+function svg(parent, tag, attrs) {
+  const node = document.createElementNS(SVG, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  parent.append(node);
+  return node;
+}
+
+// The static part: coloured zones, ticks and labels.
+function buildDial() {
+  const edges = [DIAL_MIN, ...ZONE_EDGES, DIAL_MAX];
+  for (let z = 0; z < ZONE_COLORS.length; z++) {
+    svg($('gauge-zones'), 'path', { d: arc(edges[z], edges[z + 1], 88), stroke: ZONE_COLORS[z] });
+  }
+  const ticks = $('gauge-ticks');
+  for (let db = DIAL_MIN; db <= DIAL_MAX; db += 10) {
+    const a = angleOf(db);
+    const major = db % 20 === 0;
+    svg(ticks, 'path', { d: `M${point(a, 82)}L${point(a, major ? 74 : 78)}`, class: major ? 'major' : '' });
+    // 20 and 120 would sit under the reading.
+    if (major && db > DIAL_MIN && db < DIAL_MAX) {
+      const [x, y] = point(a, 63).split(' ');
+      svg(ticks, 'text', { x, y }).textContent = String(db);
+    }
+  }
+}
+
+/** Seconds the chart shows: the selected span, or everything since the reset. */
+export function chartSeconds(stats, s) {
+  const span = SPANS[s.span];
+  return Number.isFinite(span) ? span : Math.min(stats.size * stats.dt, Math.max(1, stats.seconds));
+}
 
 export function createLevelView() {
   const el = {
     now: $('now'),
     cls: $('class'),
-    fill: $('meter-fill'),
-    maxMark: $('meter-max'),
+    needle: $('gauge-needle'),
+    range: $('gauge-range'),
+    avg: $('gauge-avg'),
     leq: $('leq'),
     max: $('max'),
     min: $('min'),
@@ -23,16 +75,12 @@ export function createLevelView() {
     duration: $('duration'),
     leqName: $('leq-name'),
     maxName: $('max-name'),
-    weighting: $('weighting'),
-    timing: $('timing'),
-    range: $('range'),
     canvas: $('history'),
   };
   const ctx = el.canvas.getContext('2d');
   let textAt = 0;
   let drawnAt = 0;
-
-  const bar = (db) => Math.min(1, Math.max(0, (db - BAR_MIN) / (BAR_MAX - BAR_MIN)));
+  buildDial();
 
   function numbers(stats, s) {
     const w = s.weighting;
@@ -46,6 +94,14 @@ export function createLevelView() {
     el.min.textContent = formatDb(stats.min(w, t) + off);
     el.peak.textContent = formatDb(stats.peak(w) + off);
     el.duration.textContent = formatDuration(stats.seconds);
+    const min = stats.min(w, t) + off;
+    const max = stats.max(w, t) + off;
+    const leq = stats.leq(w) + off;
+    const range = Number.isFinite(min) && Number.isFinite(max);
+    el.range.toggleAttribute('hidden', !range);
+    if (range) el.range.setAttribute('d', arc(min, Math.max(max, min + 0.3), 88));
+    el.avg.toggleAttribute('hidden', !Number.isFinite(leq));
+    el.avg.setAttribute('transform', `rotate(${angleOf(leq).toFixed(2)} ${CX} ${CY})`);
   }
 
   function draw(stats, s) {
@@ -60,12 +116,13 @@ export function createLevelView() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    const values = stats.recent(s.weighting, s.time, s.range);
+    const seconds = chartSeconds(stats, s);
+    const values = stats.recent(s.weighting, s.time, seconds);
     const [lo, hi] = scale(values, s.offset);
     const plot = { right: w - 26, top: 6, bottom: h - 16 };
     plot.y = (db) => plot.bottom - ((db - lo) / (hi - lo)) * (plot.bottom - plot.top);
     grid(plot, lo, hi);
-    columns(plot, values, Math.round(s.range / stats.dt), s.offset);
+    columns(plot, values, Math.round(seconds / stats.dt), s.offset);
     const leq = stats.leq(s.weighting) + s.offset;
     if (Number.isFinite(leq)) {
       ctx.strokeStyle = 'rgb(244 244 245 / 0.7)';
@@ -73,7 +130,7 @@ export function createLevelView() {
       line(0, plot.right, plot.y(leq));
       ctx.setLineDash([]);
     }
-    timeLabels(plot.right, h, s.range);
+    timeLabels(plot.right, h, seconds, !Number.isFinite(SPANS[s.span]));
   }
 
   // dB range of the chart: in steps of 10, at least 30 dB.
@@ -132,13 +189,16 @@ export function createLevelView() {
     }
   }
 
-  function timeLabels(right, h, range) {
+  function timeLabels(right, h, range, sinceReset) {
     const minutes = range >= 120;
-    const label = (seconds) => (minutes ? `−${seconds / 60} min` : `−${seconds} s`);
+    const label = (seconds) =>
+      minutes
+        ? `−${formatDb(seconds / 60, seconds % 60 ? 1 : 0)} min`
+        : `−${formatDb(seconds, seconds % 1 ? 1 : 0)} s`;
     ctx.fillStyle = '#71717a';
     ctx.textBaseline = 'alphabetic';
     for (const [x, text, align] of [
-      [0, label(range), 'left'],
+      [0, sinceReset ? 'Start' : label(range), 'left'],
       [right / 2, label(range / 2), 'center'],
       [right, 'jetzt', 'right'],
     ]) {
@@ -152,20 +212,14 @@ export function createLevelView() {
     labels(s) {
       const W = WEIGHTINGS[s.weighting];
       const T = TIMES[s.time];
-      el.weighting.textContent = `dB(${W})`;
-      el.timing.textContent = TIME_NAMES[s.time];
       el.leqName.textContent = `L${W}eq`;
       el.maxName.textContent = `L${W}${T}max`;
-      el.range.textContent = s.range >= 120 ? `${s.range / 60} min` : `${s.range} s`;
     },
-    /** Every frame while measuring: the bar follows at once, the numbers 4× a second. */
+    /** Every frame while measuring: the needle follows at once, the numbers 4× a second. */
     frame(stats, s, now, force = false) {
       const level = stats.level(s.weighting, s.time) + s.offset;
-      el.fill.style.transform = `scaleX(${bar(level)})`;
-      el.fill.style.backgroundColor = ZONE_COLORS[levelZone(level)];
-      const max = stats.max(s.weighting, s.time) + s.offset;
-      el.maxMark.style.left = `${bar(max) * 100}%`;
-      el.maxMark.hidden = !Number.isFinite(max);
+      el.needle.style.transform = `rotate(${Number.isFinite(level) ? angleOf(level).toFixed(2) : -SWEEP / 2}deg)`;
+      el.needle.style.color = Number.isFinite(level) ? ZONE_COLORS[levelZone(level)] : '';
       if (force || now - textAt >= 250) {
         textAt = now;
         numbers(stats, s);
@@ -175,7 +229,7 @@ export function createLevelView() {
     /** The chart, but only once it would have moved by a pixel (saves battery on long runs). */
     chart(stats, s, now) {
       const width = Math.max(1, el.canvas.clientWidth - 26);
-      if (now - drawnAt < Math.max(100, (s.range * 1000) / width)) return;
+      if (now - drawnAt < Math.max(100, (chartSeconds(stats, s) * 1000) / width)) return;
       drawnAt = now;
       draw(stats, s);
     },

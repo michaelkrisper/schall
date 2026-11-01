@@ -6,20 +6,27 @@ const KEY = 'schall';
 // this is a middle value until the user calibrates against a reference.
 export const DEFAULT_OFFSET = 100;
 
+// Time span of the strongest frequencies and the history chart, in seconds
+// (Infinity: since the reset).
+export const SPANS = [1, 10, 30, 60, Number.POSITIVE_INFINITY];
+
 const DEFAULTS = {
-  weighting: 0, // A, C, Z
-  time: 0, // Fast, Slow
   offset: DEFAULT_OFFSET,
-  averaging: 1, // 1 s, 10 s, since reset
-  range: 60, // history chart, seconds
+  span: 1, // index into SPANS
 };
 
+// Always dB(A) and Fast; the stats and the DSP core still have all of them.
+const FIXED = { weighting: 0, time: 0 };
+
 export function loadSettings() {
+  let stored = null;
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY)) };
+    stored = JSON.parse(localStorage.getItem(KEY));
   } catch {
-    return { ...DEFAULTS };
+    // Unreadable: defaults.
   }
+  const { offset, span } = { ...DEFAULTS, ...stored };
+  return { ...FIXED, offset, span: SPANS[span] ? span : DEFAULTS.span };
 }
 
 export function saveSettings(settings) {

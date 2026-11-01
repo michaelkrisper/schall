@@ -12,7 +12,7 @@
 
 import { findPeaks } from './dsp.js';
 
-const RING = 40; // the last 10 s at 4 updates per second
+const RING = 240; // the last 60 s at 4 updates per second
 const FLOOR = -150; // dB; the histogram covers FLOOR .. 0 dB
 const STEP = 0.5;
 const BINS = -FLOOR / STEP;
@@ -24,8 +24,8 @@ const MIN_PRESENCE = 0.1;
 const tolerance = (hz, binHz) => Math.max(1.5 * binHz, 0.004 * hz);
 const toBin = (db) => Math.min(BINS - 1, Math.max(0, Math.round((db - FLOOR) / STEP)));
 
-// Window in updates for the averaging choice: 1 s, 10 s, since the reset.
-export const WINDOWS = [4, RING, Infinity];
+// Window in updates for each of SPANS (settings.js): 1, 10, 30, 60 s, since the reset.
+export const WINDOWS = [4, 40, 120, RING, Number.POSITIVE_INFINITY];
 
 export class ToneTracker {
   constructor(binHz) {

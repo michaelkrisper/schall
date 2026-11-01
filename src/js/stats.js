@@ -21,7 +21,7 @@ const SLOW_MAX = 23;
 export const REPORT_LENGTH = 26;
 
 export class LevelStats {
-  constructor({ reportSeconds = 0.05, historySeconds = 600, settleSeconds = 0.5 } = {}) {
+  constructor({ reportSeconds = 0.05, historySeconds = 3600, settleSeconds = 0.5 } = {}) {
     this.dt = reportSeconds;
     this.size = Math.round(historySeconds / reportSeconds);
     this.history = WEIGHTINGS.map(() => TIMES.map(() => new Float32Array(this.size)));

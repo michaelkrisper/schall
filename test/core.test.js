@@ -146,7 +146,7 @@ describe('spectrum', () => {
       const core = await loadCore();
       const signal = sum(sine(hz, -30), noise(-60));
       core.feed(signal, 0.5);
-      core.x.set_mode(2);
+      core.x.set_mode(4);
       core.x.reset_spectrum();
       core.feed(signal, 1);
       const [peak] = findPeaks(core.averageDb(), core.binHz);
@@ -157,7 +157,7 @@ describe('spectrum', () => {
 
   it('separates a tone 50 dB weaker next to a strong one', async () => {
     const core = await loadCore();
-    core.x.set_mode(2);
+    core.x.set_mode(4);
     core.feed(sum(sine(1000, -20), sine(1300, -70), noise(-110)), 2);
     const peaks = findPeaks(core.averageDb(), core.binHz);
     assert.equal(peaks.length, 2, JSON.stringify(peaks));
@@ -168,7 +168,7 @@ describe('spectrum', () => {
 
   it('labels the harmonics of a motor-like sound', async () => {
     const core = await loadCore();
-    core.x.set_mode(2);
+    core.x.set_mode(4);
     core.feed(sum(sine(120, -30), sine(240, -36), sine(360, -40), sine(1050, -45), noise(-80)), 2);
     const peaks = findPeaks(core.averageDb(), core.binHz);
     assert.deepEqual(
@@ -178,7 +178,7 @@ describe('spectrum', () => {
     assert.deepEqual(harmonics(peaks, core.binHz), [null, { of: 0, k: 2 }, { of: 0, k: 3 }, null]);
   });
 
-  it('averages over 1 s, 10 s or everything since the reset', async () => {
+  it('averages over 1 s, 10 s, 30 s or everything since the reset', async () => {
     const core = await loadCore();
     // On bin centres, so the reading is not lowered by the window's scalloping.
     const low = 171 * core.binHz;
@@ -192,7 +192,7 @@ describe('spectrum', () => {
     let db = core.averageDb();
     near(at(db, 500), -20 - 5 * 10 * Math.log10(Math.E), 1, '1 s: 500 Hz has faded for 5 s');
     near(at(db, 2000), -20, 1, '1 s: 2000 Hz');
-    core.x.set_mode(2);
+    core.x.set_mode(4);
     db = core.averageDb();
     // Frames across the switch count less than their share: power goes with the square.
     near(at(db, 500), -23, 0.4, 'total: half the time at 500 Hz');
@@ -202,11 +202,16 @@ describe('spectrum', () => {
     // Exponential with τ = 10 s: after 5 s the old tone still has e^-0.5 of the weight.
     near(at(db, 500), -20 + 10 * Math.log10(Math.exp(-0.5)), 0.4, '10 s: 500 Hz');
     near(at(db, 2000), -20 + 10 * Math.log10(1 - Math.exp(-0.5)), 0.4, '10 s: 2000 Hz');
+    // The same average, now with τ = 30 s from here on.
+    core.x.set_mode(2);
+    core.feed(sine(high, -20), 30);
+    db = core.averageDb();
+    near(at(db, 500), -20 + 10 * Math.log10(Math.exp(-0.5 - 1)), 0.4, '30 s: 500 Hz');
   });
 
   it('forgets everything before a reset in the total average', async () => {
     const core = await loadCore();
-    core.x.set_mode(2);
+    core.x.set_mode(4);
     core.feed(sine(1000, -20), 1);
     // The reset clears the averages, not the 341 ms window: let it move on first.
     core.feed(sine(2000, -20), 0.5);

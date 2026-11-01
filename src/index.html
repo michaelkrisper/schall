@@ -42,6 +42,9 @@
     <button id="toggle" class="icon-btn" type="button" aria-label="Pause">
       <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M8.5 5v14M15.5 5v14"/><path class="i-play" d="M7 4.5v15l12-7.5Z"/></svg>
     </button>
+    <button id="reset" class="icon-btn reset" type="button" aria-label="Neu starten">
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4v4.5H15"/></svg>
+    </button>
     <button id="settings-btn" class="icon-btn" type="button" aria-label="Einstellungen">
       <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
     </button>
@@ -49,35 +52,34 @@
 
   <main class="view">
     <section class="hero">
-      <div class="now"><span id="now">–</span><span class="unit">dB</span></div>
-      <div class="hero-side">
-        <div class="modes">
-          <button id="weighting" class="chip" type="button" aria-label="Frequenzbewertung wechseln">dB(A)</button>
-          <button id="timing" class="chip" type="button" aria-label="Zeitbewertung wechseln">Fast</button>
+      <div class="dial">
+        <svg id="gauge" class="gauge" viewBox="0 0 200 172" aria-hidden="true">
+          <g id="gauge-zones" class="gauge-zones"></g>
+          <path id="gauge-range" class="gauge-range"/>
+          <g id="gauge-ticks" class="gauge-ticks"></g>
+          <path id="gauge-avg" class="gauge-avg" d="M100 7l-5-7h10Z"/>
+          <g id="gauge-needle" class="gauge-needle"><path d="M100 20L102.5 100h-5Z"/><circle cx="100" cy="100" r="5"/></g>
+        </svg>
+        <div class="readout">
+          <div class="now"><span id="now">–</span><span class="unit">dB(A)</span></div>
+          <div id="class" class="class">&nbsp;</div>
         </div>
-        <div id="class" class="class">&nbsp;</div>
       </div>
-    </section>
-    <div class="meter" aria-hidden="true">
-      <div class="meter-track"><div id="meter-fill" class="meter-fill"></div><div id="meter-max" class="meter-max" hidden></div></div>
-      <div class="meter-scale"><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span><span>120</span></div>
-    </div>
-    <section class="stats">
-      <div class="tile main"><span class="label">Durchschnitt</span><span id="leq" class="value">–</span><span id="leq-name" class="name">LAeq</span></div>
-      <div class="tile main"><span class="label">Maximum</span><span id="max" class="value">–</span><span id="max-name" class="name">LAFmax</span></div>
-      <div class="tile"><span class="label">Minimum</span><span id="min" class="value">–</span><span class="name">&nbsp;</span></div>
-      <div class="tile"><span class="label">Spitze</span><span id="peak" class="value">–</span><span class="name">&nbsp;</span></div>
+      <div class="stats">
+        <div class="tile main"><span class="label">Durchschnitt</span><span id="leq" class="value">–</span><span id="leq-name" class="name">LAeq</span></div>
+        <div class="tile main"><span class="label">Maximum</span><span id="max" class="value">–</span><span id="max-name" class="name">LAFmax</span></div>
+        <div class="tile"><span class="label">Minimum</span><span id="min" class="value">–</span></div>
+        <div class="tile"><span class="label">Spitze</span><span id="peak" class="value">–</span></div>
+      </div>
     </section>
     <section class="card history">
       <div class="card-head">
         <span class="card-title">Verlauf</span>
         <span id="duration" class="card-note">0:00</span>
-        <button id="range" class="chip small" type="button" aria-label="Zeitraum wechseln">60 s</button>
-        <button class="reset chip small" type="button">Neu starten</button>
       </div>
       <canvas id="history"></canvas>
     </section>
-    <section class="card peaks">
+    <section class="card peaks" title="Antippen zum Vergrößern">
       <div class="card-head">
         <span class="card-title">Stärkste Frequenzen</span>
         <button id="averaging" class="chip small" type="button" aria-label="Mittelung wechseln">Ø 10 s</button>
@@ -138,10 +140,9 @@
       <h3>Was die Werte bedeuten</h3>
       <dl>
         <dt>Durchschnitt (Leq)</dt><dd>Energetischer Mittelwert seit „Neu starten“, wie bei Lärmmessungen üblich.</dd>
-        <dt>Maximum</dt><dd>Höchster Pegel mit der gewählten Zeitbewertung. Spitze: höchster Momentanwert.</dd>
-        <dt>dB(A) · dB(C) · dB(Z)</dt><dd>A wie das Gehör empfindet (Standard für Lärm), C fast linear für tiefe Töne, Z unbewertet.</dd>
-        <dt>Fast · Slow</dt><dd>125 ms folgt schnellen Änderungen, 1 s zeigt ruhiger an.</dd>
-        <dt>Stärkste Frequenzen</dt><dd>Die Töne werden über die Zeit verfolgt (1 s, 10 s oder seit „Neu starten“, je nach Mittelung). Vorne steht, was mindestens die halbe Zeit am lautesten da ist: Ein gleichbleibender Ton schlägt einen kurzen lauten. Der Balken zeigt, wie beständig ein Ton ist (voll = die ganze Zeit), die Zahl seinen typischen Pegel. „2× ①“ heißt doppelte Frequenz von Nummer 1, typisch für Motoren und Lüfter. Auflösung ca. 3 Hz (FFT mit 16384 Punkten), Genauigkeit ca. 0,1 Hz.</dd>
+        <dt>Zeiger</dt><dd>Aktueller Pegel in dB(A), Zeitbewertung Fast (125 ms). Der helle Bogen reicht vom Minimum bis zum Maximum seit „Neu starten“, das Dreieck zeigt den Durchschnitt.</dd>
+        <dt>Maximum</dt><dd>Höchster Pegel (Fast). Spitze: höchster Momentanwert.</dd>
+        <dt>Stärkste Frequenzen</dt><dd>Spektrum und Liste vergrößern sich beim Antippen. Die Töne werden über die Zeit verfolgt (1 s, 10 s, 30 s, 60 s oder seit „Neu starten“, je nach Mittelung; der Verlauf zeigt denselben Zeitraum). Vorne steht, was mindestens die halbe Zeit am lautesten da ist: Ein gleichbleibender Ton schlägt einen kurzen lauten. Der Balken zeigt, wie beständig ein Ton ist (voll = die ganze Zeit), die Zahl seinen typischen Pegel. „2× ①“ heißt doppelte Frequenz von Nummer 1, typisch für Motoren und Lüfter. Auflösung ca. 3 Hz (FFT mit 16384 Punkten), Genauigkeit ca. 0,1 Hz.</dd>
       </dl>
     </section>
     <p class="about">Schall · <a href="https://github.com/michaelkrisper/schall">Quellcode</a> · MIT-Lizenz</p>

@@ -418,20 +418,41 @@ export function createSpectrumView() {
     } else lowerSince = 0;
   }
 
-  // Cursor: touch or drag on the plot; stays 2.5 s after letting go.
+  // A tap enlarges the card to the whole screen, another one shrinks it back.
+  function toggleMax(card) {
+    const on = !card.classList.contains('max');
+    for (const c of document.querySelectorAll('.card.max')) c.classList.remove('max');
+    card.classList.toggle('max', on);
+  }
+  const peaksCard = list.closest('.card');
+  peaksCard.addEventListener('click', () => toggleMax(peaksCard));
+
+  // Cursor: hold or drag on the plot; stays 2.5 s after letting go. A short
+  // tap without moving enlarges the plot instead.
+  let down = null;
   overlay.addEventListener('pointerdown', (e) => {
     overlay.setPointerCapture(e.pointerId);
     clearTimeout(cursorTimer);
+    down = { x: e.clientX, y: e.clientY, t: e.timeStamp };
     cursorX = e.offsetX;
     drawOverlay();
   });
   overlay.addEventListener('pointermove', (e) => {
     if (!overlay.hasPointerCapture(e.pointerId)) return;
+    if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down = null;
     cursorX = Math.min(Math.max(e.offsetX, 0), cssW - 1);
     drawOverlay();
   });
-  const release = () => {
+  const release = (e) => {
     clearTimeout(cursorTimer);
+    if (e.type === 'pointerup' && down && e.timeStamp - down.t < 300) {
+      down = null;
+      cursorX = null;
+      drawOverlay();
+      toggleMax(box);
+      return;
+    }
+    down = null;
     cursorTimer = setTimeout(() => {
       cursorX = null;
       drawOverlay();
@@ -492,9 +513,7 @@ export function createSpectrumView() {
     onAverage(db, current) {
       if (!audio) return;
       tracker.update(current, { maxHz });
-      peaks = tracker
-        .ranked(WINDOWS[settings.averaging])
-        .map((tone) => ({ ...tone, db: levelNear(db, tone.hz) }));
+      peaks = tracker.ranked(WINDOWS[settings.span]).map((tone) => ({ ...tone, db: levelNear(db, tone.hz) }));
       harm = harmonics(peaks, audio.binHz);
       if (!visible) return;
       renderList();

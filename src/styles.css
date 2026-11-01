@@ -275,96 +275,102 @@ button:disabled {
 
 .hero {
   flex: none;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 176px) 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
 }
 
+.dial {
+  position: relative;
+}
+
+.gauge {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  fill: none;
+}
+
+.gauge-zones path {
+  stroke-width: 8;
+  opacity: 0.28;
+}
+
+.gauge-range {
+  stroke: var(--text);
+  stroke-width: 8;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+.gauge-ticks path {
+  stroke: var(--faint);
+  stroke-width: 1;
+}
+
+.gauge-ticks path.major {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+}
+
+.gauge-ticks text {
+  fill: var(--faint);
+  font-size: 11px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.gauge-avg {
+  fill: var(--accent);
+}
+
+.gauge-needle {
+  fill: currentColor;
+  color: var(--muted);
+  transform-box: view-box;
+  transform-origin: 100px 100px;
+  transform: rotate(-120deg);
+  transition: transform 0.1s linear;
+}
+
+.readout {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  pointer-events: none;
+}
+
 .now {
-  font-size: clamp(54px, 17vw, 76px);
-  font-weight: 250;
+  font-size: clamp(26px, 8.5vw, 34px);
+  font-weight: 300;
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
   white-space: nowrap;
 }
 
 .now .unit {
-  margin-left: 4px;
-  font-size: 0.3em;
+  margin-left: 3px;
+  font-size: 0.36em;
   font-weight: 500;
   letter-spacing: 0;
   color: var(--muted);
 }
 
-.hero-side {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  min-width: 0;
-}
-
-.modes {
-  display: flex;
-  gap: 6px;
-}
-
 .class {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--muted);
-  text-align: right;
-}
-
-.meter {
-  flex: none;
-  margin: 0 2px;
-}
-
-.meter-track {
-  position: relative;
-  height: 8px;
-  border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    rgb(52 211 153 / 0.14) 0 35%,
-    rgb(250 204 21 / 0.14) 35% 50%,
-    rgb(251 146 60 / 0.14) 50% 65%,
-    rgb(244 63 94 / 0.14) 65%
-  );
+  white-space: nowrap;
   overflow: hidden;
-}
-
-.meter-fill {
-  position: absolute;
-  inset: 0;
-  transform-origin: 0 50%;
-  transform: scaleX(0);
-  border-radius: 4px;
-  background: #34d399;
-}
-
-.meter-max {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  margin-left: -1px;
-  background: var(--text);
-}
-
-.meter-scale {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2px;
-  font-size: 10px;
-  color: var(--faint);
+  text-overflow: ellipsis;
 }
 
 .stats {
-  flex: none;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
 
@@ -372,7 +378,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 6px 8px;
+  padding: 6px 7px;
   border-radius: 12px;
   background: var(--card);
   border: 1px solid var(--border);
@@ -420,6 +426,40 @@ button:disabled {
 
 .card-head .card-note {
   margin-right: 2px;
+}
+
+/* A tapped card fills the screen; the shadow covers everything around it. */
+.card.max {
+  position: fixed;
+  z-index: 5;
+  inset: var(--top) max(14px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 14px)
+    max(14px, env(safe-area-inset-left));
+  max-height: none;
+  box-shadow: 0 0 0 100vmax var(--bg);
+}
+
+.peaks {
+  cursor: zoom-in;
+}
+
+.peaks.max {
+  cursor: zoom-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.peaks.max .peak-list li {
+  padding: 10px;
+}
+
+.peaks.max .hz {
+  font-size: 30px;
+}
+
+.peaks.max .meta,
+.peaks.max .db {
+  font-size: 16px;
 }
 
 /* --- Frequencies --- */

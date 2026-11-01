@@ -84,6 +84,7 @@ struct State {
     frames: f64,
     alpha_short: f32,
     alpha_long: f32,
+    hop_seconds: f64,
     spectrum_primed: bool,
     mode: u32,
     cols: usize,
@@ -143,6 +144,7 @@ static mut STATE: State = State {
     frames: 0.0,
     alpha_short: 0.0,
     alpha_long: 0.0,
+    hop_seconds: 0.0,
     spectrum_primed: false,
     mode: 0,
     cols: 0,
@@ -361,19 +363,31 @@ pub extern "C" fn setup(sample_rate: f64, fft_size: u32, hop: u32, report_sample
         s.pt_re[k] = cos as f32;
         s.pt_im[k] = sin as f32;
     }
-    let hop_seconds = hop as f64 / sample_rate;
-    s.alpha_short = (1.0 - exp_neg(hop_seconds / 1.0)) as f32;
-    s.alpha_long = (1.0 - exp_neg(hop_seconds / 10.0)) as f32;
+    s.hop_seconds = hop as f64 / sample_rate;
+    s.alpha_short = (1.0 - exp_neg(s.hop_seconds / 1.0)) as f32;
+    set_alpha_long(s);
     reset_spectrum();
     s.cols = 0;
     0
 }
 
-/// 0: average over ~1 s, 1: ~10 s, 2: everything since the last reset.
+/// 0: average over ~1 s, 1: ~10 s, 2: ~30 s, 3: ~60 s, 4: everything since
+/// the last reset. 10 to 60 s share one average whose time constant changes.
 #[unsafe(no_mangle)]
 pub extern "C" fn set_mode(mode: u32) {
-    st().mode = mode.min(2);
-    select_average(st());
+    let s = st();
+    s.mode = mode.min(4);
+    set_alpha_long(s);
+    select_average(s);
+}
+
+fn set_alpha_long(s: &mut State) {
+    let tau = match s.mode {
+        2 => 30.0,
+        3 => 60.0,
+        _ => 10.0,
+    };
+    s.alpha_long = (1.0 - exp_neg(s.hop_seconds / tau)) as f32;
 }
 
 #[unsafe(no_mangle)]
@@ -787,7 +801,7 @@ fn select_average(s: &mut State) {
     let m = s.fft_m;
     match s.mode {
         0 => s.selected[..m].copy_from_slice(&s.avg_short[..m]),
-        1 => s.selected[..m].copy_from_slice(&s.avg_long[..m]),
+        1..=3 => s.selected[..m].copy_from_slice(&s.avg_long[..m]),
         _ => unsafe {
             let inv = f64x2_splat(if s.frames > 0.0 { 1.0 / s.frames } else { 0.0 });
             let t = s.total.as_ptr() as *const v128;
