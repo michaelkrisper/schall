@@ -5,7 +5,7 @@ welcome. Please open an issue first for larger changes.
 
 ## Setup
 
-Requirements: Node.js 24, and for changes to the DSP core Rust with the
+Requirements: Node.js 26, and for changes to the DSP core Rust with the
 WebAssembly target.
 
 ```sh

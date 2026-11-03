@@ -1,4 +1,4 @@
-# Updates of actions and dev tools as grouped weekly pull requests.
+# Weekly dependency updates; minor and patch updates are grouped per ecosystem.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -7,7 +7,7 @@ updates:
       interval: weekly
     groups:
       actions:
-        patterns: ['*']
+        update-types: [minor, patch]
 
   - package-ecosystem: npm
     directory: /
@@ -15,4 +15,12 @@ updates:
       interval: weekly
     groups:
       npm:
-        patterns: ['*']
+        update-types: [minor, patch]
+
+  - package-ecosystem: cargo
+    directory: /wasm
+    schedule:
+      interval: weekly
+    groups:
+      cargo:
+        update-types: [minor, patch]
