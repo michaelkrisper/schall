@@ -11,7 +11,7 @@ WebAssembly target.
 ```sh
 npm ci
 npm run serve                              # http://localhost:8080
-rustup target add wasm32-unknown-unknown   # only to change wasm/
+rustup target add wasm32-unknown-unknown wasm32-wasip1   # only to change wasm/
 npm run wasm                               # rebuild src/dsp.wasm
 ```
 
@@ -23,6 +23,7 @@ the app runs without Rust; CI rebuilds it from `wasm/` on every push.
 ```sh
 npm run lint:fix     # Biome: format and lint JavaScript, CSS, JSON
 npm run lint:rust    # rustfmt and clippy for the DSP core
+npm run test:rust    # Rust unit tests for the DSP core
 npm test             # all tests; the browser test needs Chrome (skipped otherwise)
 npm run check        # what CI runs
 ```

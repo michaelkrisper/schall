@@ -1,3 +1,7 @@
 [build]
 target = "wasm32-unknown-unknown"
 rustflags = ["-C", "target-feature=+simd128"]
+
+# `cargo test --target wasm32-wasip1` runs the unit tests in Node's WASI.
+[target.wasm32-wasip1]
+runner = ["node", "--no-warnings", "../scripts/wasi-run.mjs"]

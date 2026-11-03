@@ -7,10 +7,11 @@
 //! sine wave reads its RMS level (full-scale sine = 0.5, i.e. -3 dB). The page
 //! adds the calibration offset.
 
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 
 use core::arch::wasm32::*;
 
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
     core::arch::wasm32::unreachable()
@@ -879,4 +880,83 @@ fn ceil_index(x: f32) -> usize {
     }
     let i = x as usize;
     if (i as f32) < x { i + 1 } else { i }
+}
+
+// Unit tests for the maths helpers, run on wasm32-wasip1 (see README):
+// `cargo test --target wasm32-wasip1`. The whole pipeline is tested from
+// JavaScript against the built module in test/core.test.js.
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sin_cos_matches_std_over_its_range() {
+        for i in -1000..=1000 {
+            let x = PI * i as f64 / 1000.0;
+            let (s, c) = sin_cos(x);
+            assert!((s - x.sin()).abs() < 1e-14, "sin({x})");
+            assert!((c - x.cos()).abs() < 1e-14, "cos({x})");
+        }
+    }
+
+    #[test]
+    fn cos_frac_reduces_any_index() {
+        for n in [3, 8, 1000, MAX_N] {
+            for i in [0, 1, n / 4, n / 2, n - 1, n, 3 * n + 7] {
+                let want = (2.0 * PI * i as f64 / n as f64).cos();
+                assert!((cos_frac(i, n) - want).abs() < 1e-12, "cos_frac({i}, {n})");
+            }
+        }
+    }
+
+    #[test]
+    fn exp_neg_matches_std() {
+        for x in [0.0_f64, 1e-6, 0.1, 0.125, 0.5, 1.0, 2.5, 10.0, 50.0] {
+            let want = (-x).exp();
+            assert!(((exp_neg(x) - want) / want).abs() < 1e-12, "exp(-{x})");
+        }
+    }
+
+    #[test]
+    fn db4_is_ten_log10_per_lane() {
+        for x in [1e-12_f32, 1e-6, 0.001, 0.5, 1.0, 2.0, 3.7, 1e6] {
+            let v = db4(f32x4(x, x * 2.0, x * 10.0, x * 0.3));
+            for (lane, f) in [(0, 1.0), (1, 2.0), (2, 10.0), (3, 0.3)] {
+                let want = 10.0 * (x as f64 * f).log10();
+                let got = match lane {
+                    0 => f32x4_extract_lane::<0>(v),
+                    1 => f32x4_extract_lane::<1>(v),
+                    2 => f32x4_extract_lane::<2>(v),
+                    _ => f32x4_extract_lane::<3>(v),
+                } as f64;
+                assert!(
+                    (got - want).abs() < 1e-3,
+                    "db4({}) = {got}, want {want}",
+                    x as f64 * f
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn db4_of_zero_is_floored() {
+        let v = db4(f32x4_splat(0.0));
+        assert!((f32x4_extract_lane::<0>(v) + 300.0).abs() < 1e-3);
+    }
+
+    #[test]
+    fn hmax_finds_the_largest_lane() {
+        assert_eq!(hmax(f32x4(1.0, 4.0, -2.0, 3.0)), 4.0);
+        assert_eq!(hmax(f32x4(-5.0, -4.0, -6.0, -9.0)), -4.0);
+        assert_eq!(hmax(f32x4(0.0, 0.0, 0.0, 7.5)), 7.5);
+    }
+
+    #[test]
+    fn ceil_index_rounds_up_and_clamps_at_zero() {
+        assert_eq!(ceil_index(-3.0), 0);
+        assert_eq!(ceil_index(0.0), 0);
+        assert_eq!(ceil_index(0.1), 1);
+        assert_eq!(ceil_index(2.0), 2);
+        assert_eq!(ceil_index(2.000_1), 3);
+    }
 }

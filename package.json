@@ -36,6 +36,7 @@
     "lint:fix": "biome check --write",
     "lint:rust": "cd wasm && cargo fmt --check && cargo clippy --release -- -D warnings",
     "test": "node --test \"test/*.test.js\"",
+    "test:rust": "cd wasm && cargo test --target wasm32-wasip1",
     "test:unit": "node --test test/core.test.js test/dsp.test.js test/structure.test.js",
     "test:browser": "node --test test/app.test.js",
     "screenshots": "SCREENSHOTS=1 node --test test/app.test.js",

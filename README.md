@@ -12,7 +12,7 @@ an aircraft cabin. Record it, play it back, keep it as a WAV file.
 
 [**Open the app →**](https://michaelkrisper.github.io/schall/)
 
-[![Deploy](https://github.com/michaelkrisper/schall/actions/workflows/deploy.yml/badge.svg)](https://github.com/michaelkrisper/schall/actions/workflows/deploy.yml)
+[![Test and deploy](https://github.com/michaelkrisper/schall/actions/workflows/deploy.yml/badge.svg)](https://github.com/michaelkrisper/schall/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![WebAssembly SIMD](https://img.shields.io/badge/DSP-Rust%20%E2%86%92%20WebAssembly%20SIMD-654ff0)
 ![WebGL2](https://img.shields.io/badge/graphics-WebGL2-990000)
@@ -212,7 +212,8 @@ browser's storage until you share or delete them. See [SECURITY.md](SECURITY.md)
 ## Development
 
 Requirements: Node.js 24. For changes to the DSP core: Rust with the
-WebAssembly target (`rustup target add wasm32-unknown-unknown`).
+WebAssembly targets (`rustup target add wasm32-unknown-unknown wasm32-wasip1`;
+the second one only for the Rust unit tests).
 
 ```sh
 git clone https://github.com/michaelkrisper/schall.git
@@ -231,19 +232,21 @@ checked in, so Rust is only needed to change the core; CI rebuilds it from
 | `npm run wasm` | Build `wasm/` and copy the module to `src/dsp.wasm` |
 | `npm run lint` / `lint:fix` | Biome: format and lint JavaScript, CSS, JSON |
 | `npm run lint:rust` | rustfmt and clippy (warnings are errors) |
+| `npm run test:rust` | Rust unit tests, run as WebAssembly in Node's WASI |
 | `npm test` | All tests |
 | `npm run test:unit` / `test:browser` | Node-only tests / the app in headless Chrome |
 | `npm run check` | What CI runs: lint and all tests |
 | `npm run screenshots` | Refresh the images in `docs/` |
 | `npm run icons` | Render the PNG icons from `src/icons/icon.svg` |
 
-Every push to `main` runs rustfmt, clippy, Biome and all tests, builds the
-core and deploys to GitHub Pages; the smoke test afterwards checks the live
+Every push and pull request runs rustfmt, clippy, Biome and all tests; every
+push to `main` then deploys to GitHub Pages; the smoke test afterwards checks the live
 files ([deploy.yml](.github/workflows/deploy.yml)).
 
 ## Testing
 
-70 tests with Node's built-in test runner, no test dependencies:
+70 tests with Node's built-in test runner and 7 Rust unit tests, no test
+dependencies:
 
 | File | Tests | Covers |
 | --- | --- | --- |
@@ -251,6 +254,7 @@ files ([deploy.yml](.github/workflows/deploy.yml)).
 | [`test/dsp.test.js`](test/dsp.test.js) | 17 | Filter design against the IEC 61672 table and curves, notes, peak finding, formatting, statistics and history ring, WAV header and file names |
 | [`test/tracker.test.js`](test/tracker.test.js) | 5 | Tone tracker: steady before transient, louder-but-mostly-there first, drift, windows, and a hum among loud bursts on the real core |
 | [`test/structure.test.js`](test/structure.test.js) | 9 | Offline cache and module preloads complete, only own caches removed, element ids exist, icon sizes, Rust and JavaScript agree on buffer layouts, versions match |
+| [`wasm/src/lib.rs`](wasm/src/lib.rs) | 7 | The maths without libm against `std`: sine and cosine, exact angle reduction, `e^-x`, the SIMD `10·log10` per lane and its floor, horizontal max, index rounding (`npm run test:rust`) |
 | [`test/app.test.js`](test/app.test.js) | 15 | The app in headless Chrome with a fake microphone playing two known tones: levels on screen, everything on one screen without scrolling, the frequency list, the WebGL spectrogram, averaging, recording and the WAV file, playback, delete, calibration, pause, history range, no zoom, settings after a reload, offline start from the service worker, no console errors |
 
 The browser test is skipped when no Chrome is installed (set `CHROME` to its

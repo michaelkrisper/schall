@@ -1,7 +1,7 @@
-name: Deploy
+name: Test and deploy
 
-# Lints (rustfmt, clippy, Biome), builds the Rust DSP core to WebAssembly,
-# runs all tests (including the app in headless Chrome with a fake
+# Lints (rustfmt, clippy, Biome), runs the Rust unit tests, builds the Rust
+# DSP core to WebAssembly, runs all tests (including the app in headless Chrome with a fake
 # microphone) and publishes src/ to GitHub Pages on every push to main. The
 # service worker gets the commit stamped in, so each release installs a fresh
 # app cache.
@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  check:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -30,10 +30,11 @@ jobs:
           cache: npm
       - name: Rust toolchain
         run: |
-          rustup target add wasm32-unknown-unknown
+          rustup target add wasm32-unknown-unknown wasm32-wasip1
           rustup component add rustfmt clippy
       - run: npm ci
       - run: npm run lint:rust
+      - run: npm run test:rust
       - run: npm run wasm
       - run: npm run check
       - name: Stamp version
@@ -46,7 +47,7 @@ jobs:
 
   deploy:
     if: github.event_name != 'pull_request'
-    needs: check
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       pages: write

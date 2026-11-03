@@ -1,14 +1,13 @@
 name: Dependabot auto-merge
 
-# Mergt Dependabot-PRs, sobald die CI auf dem PR grün ist (auch Major-Updates).
-# Ohne GitHub Pro gibt es für private Repos keine Pflicht-Checks, deshalb wartet
-# dieser Workflow selbst auf den erfolgreichen CI-Lauf. Merges mit dem
-# GITHUB_TOKEN lösen keine push-Workflows aus, darum wird das Deploy danach
-# per workflow_dispatch angestoßen.
+# Merges Dependabot PRs once CI on the PR is green (major updates included).
+# Without required status checks this workflow waits for the successful CI run
+# itself. Merges made with the GITHUB_TOKEN do not trigger push workflows, so
+# the deploy is started afterwards via workflow_dispatch.
 
 on:
   workflow_run:
-    workflows: [Deploy]
+    workflows: [Test and deploy]
     types: [completed]
 
 permissions:
@@ -30,19 +29,19 @@ jobs:
       BRANCH: ${{ github.event.workflow_run.head_branch }}
       DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
     steps:
-      - name: Mergen
+      - name: Merge
         id: merge
         run: |
           set -euo pipefail
           pr=$(gh pr list --head "$BRANCH" --state open --json number,author \
             --jq '.[] | select(.author.login == "app/dependabot") | .number')
           if [ -z "$pr" ]; then
-            echo "Kein offener Dependabot-PR für $BRANCH"
+            echo "No open Dependabot PR for $BRANCH"
             exit 0
           fi
           gh pr merge "$pr" --squash --match-head-commit "$SHA"
           echo "merged=true" >> "$GITHUB_OUTPUT"
-      # Deploy-Workflow(s) dieses Repos; brauchen einen workflow_dispatch-Trigger.
-      - name: Deploy anstoßen
+      # This repo's deploy workflow; it needs a workflow_dispatch trigger.
+      - name: Trigger deploy
         if: steps.merge.outputs.merged == 'true'
         run: gh workflow run deploy.yml --ref "$DEFAULT_BRANCH"
