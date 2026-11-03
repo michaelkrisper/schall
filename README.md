@@ -14,6 +14,9 @@ an aircraft cabin. Record it, play it back, keep it as a WAV file.
 
 [![Test and deploy](https://github.com/michaelkrisper/schall/actions/workflows/deploy.yml/badge.svg)](https://github.com/michaelkrisper/schall/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-2ea44f)](https://michaelkrisper.github.io/schall/)
+![Node.js 26](https://img.shields.io/badge/Node.js-26-5fa04e)
+![Rust 2024](https://img.shields.io/badge/Rust-edition%202024-dea584)
 ![WebAssembly SIMD](https://img.shields.io/badge/DSP-Rust%20%E2%86%92%20WebAssembly%20SIMD-654ff0)
 ![WebGL2](https://img.shields.io/badge/graphics-WebGL2-990000)
 ![PWA](https://img.shields.io/badge/PWA-installable%20%C2%B7%20offline-5a0fc8)
@@ -93,6 +96,8 @@ recordings and settings behind the buttons in the top bar.
   app.
 - Calibration against a reference reading in one step.
 - No account, no backend, no tracking.
+- The user interface is in German; code, comments and documentation are in
+  English.
 
 ## Getting started
 
@@ -211,7 +216,7 @@ browser's storage until you share or delete them. See [SECURITY.md](SECURITY.md)
 
 ## Development
 
-Requirements: Node.js 24. For changes to the DSP core: Rust with the
+Requirements: Node.js 26 (see `.nvmrc`). For changes to the DSP core: Rust with the
 WebAssembly targets (`rustup target add wasm32-unknown-unknown wasm32-wasip1`;
 the second one only for the Rust unit tests).
 
@@ -245,7 +250,7 @@ files ([deploy.yml](.github/workflows/deploy.yml)).
 
 ## Testing
 
-70 tests with Node's built-in test runner and 7 Rust unit tests, no test
+71 tests with Node's built-in test runner and 7 Rust unit tests, no test
 dependencies:
 
 | File | Tests | Covers |
@@ -255,7 +260,7 @@ dependencies:
 | [`test/tracker.test.js`](test/tracker.test.js) | 5 | Tone tracker: steady before transient, louder-but-mostly-there first, drift, windows, and a hum among loud bursts on the real core |
 | [`test/structure.test.js`](test/structure.test.js) | 9 | Offline cache and module preloads complete, only own caches removed, element ids exist, icon sizes, Rust and JavaScript agree on buffer layouts, versions match |
 | [`wasm/src/lib.rs`](wasm/src/lib.rs) | 7 | The maths without libm against `std`: sine and cosine, exact angle reduction, `e^-x`, the SIMD `10·log10` per lane and its floor, horizontal max, index rounding (`npm run test:rust`) |
-| [`test/app.test.js`](test/app.test.js) | 15 | The app in headless Chrome with a fake microphone playing two known tones: levels on screen, everything on one screen without scrolling, the frequency list, the WebGL spectrogram, averaging, recording and the WAV file, playback, delete, calibration, pause, history range, no zoom, settings after a reload, offline start from the service worker, no console errors |
+| [`test/app.test.js`](test/app.test.js) | 16 | The app in headless Chrome with a fake microphone playing two known tones: levels on screen, everything on one screen without scrolling, the frequency list, the WebGL spectrogram, averaging, enlarging lists and plots on a tap, restart from the top bar, recording and the WAV file, playback, delete, calibration, pause, history range, no zoom, settings after a reload, offline start from the service worker, no console errors |
 
 The browser test is skipped when no Chrome is installed (set `CHROME` to its
 path otherwise).
