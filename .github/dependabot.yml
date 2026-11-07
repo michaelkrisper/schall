@@ -5,9 +5,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Majors included: separate PRs on the same workflow file block each other's auto-merge.
     groups:
       actions:
-        update-types: [minor, patch]
+        patterns: ['*']
 
   - package-ecosystem: npm
     directory: /
