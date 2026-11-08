@@ -176,9 +176,16 @@ export function createLevelView() {
     }
   }
 
-  // One column per pixel: the range of levels in its time slice.
+  // One column per pixel: the range of levels in its time slice, over a faint
+  // area that follows the loudest level of each slice.
   function columns(plot, values, slots, off) {
     const missing = slots - values.length;
+    const fade = ctx.createLinearGradient(0, plot.top, 0, plot.bottom);
+    fade.addColorStop(0, 'rgb(255 255 255 / 0.1)');
+    fade.addColorStop(1, 'rgb(255 255 255 / 0)');
+    ctx.beginPath();
+    let first = -1;
+    let last = -1;
     for (let c = 0; c < plot.right; c++) {
       const i0 = Math.max(0, Math.floor((c * slots) / plot.right) - missing);
       const i1 = Math.floor(((c + 1) * slots) / plot.right) - missing;
@@ -190,13 +197,22 @@ export function createLevelView() {
       }
       if (!Number.isFinite(b)) continue;
       const top = plot.y(b + off);
+      if (first < 0) {
+        first = c;
+        ctx.moveTo(c, top);
+      } else ctx.lineTo(c, top);
+      last = c + 1;
+      ctx.lineTo(last, top);
       ctx.fillStyle = ZONE_COLORS[levelZone(b + off)];
-      // A faint area below the line, then the range of the slice on top.
-      ctx.globalAlpha = 0.12;
-      ctx.fillRect(c, top, 1, plot.bottom - top);
-      ctx.globalAlpha = 1;
       ctx.fillRect(c, top, 1, Math.max(1.5, plot.y(a + off) - top));
     }
+    if (first < 0) return;
+    ctx.lineTo(last, plot.bottom);
+    ctx.lineTo(first, plot.bottom);
+    ctx.fillStyle = fade;
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   function timeLabels(right, h, range, sinceReset) {

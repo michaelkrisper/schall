@@ -327,7 +327,7 @@ button:disabled {
 
 .chip {
   height: 32px;
-  padding: 0 14px;
+  padding: 0 12px;
   border-radius: 16px;
   background: var(--card-2);
   border: 1px solid var(--border);
@@ -485,7 +485,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 8px 10px 7px;
+  padding: 8px 7px 7px 9px;
   background: var(--card);
 }
 
@@ -494,11 +494,9 @@ button:disabled {
 }
 
 .tile .label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--faint);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -517,19 +515,6 @@ button:disabled {
   font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--text);
-}
-
-/* The average matches its marker on the dial. */
-.tile.main:first-child .label::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-right: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 6px var(--accent);
-  vertical-align: 1px;
 }
 
 .tile .name {
@@ -589,10 +574,17 @@ button:disabled {
 
 .peaks.max .peak-list li {
   padding: 10px;
+  grid-template-columns: 30px 1fr auto auto;
 }
 
 .peaks.max .hz {
   font-size: 30px;
+}
+
+.peaks.max .rank {
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
 }
 
 .peaks.max .meta,
@@ -625,14 +617,13 @@ button:disabled {
   overflow: hidden;
 }
 
-/* Presence: a wash that fades out to the right, with a brighter leading edge. */
+/* Presence: a wash that gets stronger to the right. */
 .peak-list li::before {
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
   width: calc(var(--w, 0) * 100%);
-  background: linear-gradient(90deg, rgb(251 191 36 / 0.03), rgb(251 191 36 / 0.16));
-  box-shadow: inset -2px 0 0 rgb(251 191 36 / 0.45);
+  background: linear-gradient(90deg, rgb(251 191 36 / 0.03), rgb(251 191 36 / 0.18));
   border-radius: inherit;
   transition: width 0.3s var(--ease);
 }
@@ -870,7 +861,7 @@ button:disabled {
   width: min(520px, 100%);
   max-height: 88dvh;
   margin: auto auto 0;
-  padding: 24px 20px calc(env(safe-area-inset-bottom) + 16px);
+  padding: 24px 18px calc(env(safe-area-inset-bottom) + 16px);
   border: 0;
   border-top: 1px solid var(--border);
   border-radius: 28px 28px 0 0;
