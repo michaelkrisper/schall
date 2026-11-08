@@ -313,10 +313,14 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
       }
       await sleep(300);
     };
+    const filled = () => evaluate('window.schall.spectrum.debug().filled');
+    const before = await filled();
     await tap();
     assert.ok(await full('.scope'), 'spectrum enlarged');
+    assert.ok((await filled()) >= before, 'spectrogram carries on when enlarged');
     await tap();
     assert.ok(!(await full('.scope')), 'spectrum back');
+    assert.ok((await filled()) >= before, 'spectrogram carries on when shrunk');
   });
 
   it('records, lists and exports a WAV file', async () => {

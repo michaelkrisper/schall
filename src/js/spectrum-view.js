@@ -215,9 +215,18 @@ export function createSpectrumView() {
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
     }
-    cols = Math.min(Math.round(w * dpr), MAX_COLS);
+    let next = Math.min(Math.round(w * dpr), MAX_COLS);
     // Columns must come in fours for the DSP core's SIMD dB conversion.
-    cols -= cols % 4;
+    next -= next % 4;
+    // Same columns (e.g. enlarged, which only changes the height): the
+    // spectrogram carries on and is just drawn bigger.
+    if (next === cols) {
+      dirty = true;
+      drawGl();
+      drawOverlay();
+      return;
+    }
+    cols = next;
     head = -1;
     filled = 0;
     lastAvg = null;
