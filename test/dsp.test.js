@@ -179,6 +179,30 @@ describe('level statistics', () => {
     assert.deepEqual([...stats.recent(0, 1, 0.1)], [-5, -6]);
   });
 
+  it('gives Leq, minimum, maximum and peak over the last seconds', () => {
+    const stats = new LevelStats({ windowSeconds: 0.2, settleSeconds: 0.05 });
+    stats.add(report(1)); // settling: in no window
+    stats.add(report(0.1, { peak: 0.5 }));
+    for (let i = 0; i < 3; i++) stats.add(report(0.001));
+    // The last 0.1 s: two reports of 0.001.
+    let s = stats.window(0, 0, 0.1);
+    assert.ok(Math.abs(s.leq + 30) < 1e-9 && s.min === -30 && s.max === -30);
+    assert.ok(Math.abs(s.peak - 10 * Math.log10(0.002)) < 1e-9);
+    // 0.2 s holds all four: energy mean (0.1 + 3 × 0.001) / 4.
+    s = stats.window(0, 1, 10);
+    assert.ok(Math.abs(s.leq - 10 * Math.log10(0.103 / 4)) < 1e-9);
+    assert.ok(s.min === -30 && s.max === -10 && Math.abs(s.peak - 10 * Math.log10(0.5)) < 1e-9);
+    // The ring is full: the 0.1 report drops out.
+    stats.add(report(0.001));
+    assert.equal(stats.window(0, 0, 10).max, -30);
+    // Infinity: since the reset, the same as the totals.
+    assert.equal(stats.window(0, 0, Infinity).max, stats.max(0, 0));
+    assert.equal(stats.window(0, 0, Infinity).max, -10);
+    stats.reset();
+    s = stats.window(0, 0, 10);
+    assert.ok([s.leq, s.min, s.max, s.peak].every((v) => v === -Infinity));
+  });
+
   it('reports nothing before the first measurement', () => {
     const stats = new LevelStats();
     assert.equal(stats.leq(0), -Infinity);

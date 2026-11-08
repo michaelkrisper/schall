@@ -207,7 +207,7 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     near(number(await text('#leq')), expected('A'), 0.5, 'LAeq');
     near(number(await text('#now')), expected('A'), 0.5, 'LAF');
     near(number(await text('#max')), expected('A'), 0.6, 'LAFmax');
-    assert.equal(await text('#leq-name'), 'LAeq');
+    assert.equal(await evaluate(`document.querySelector('#leq-name').title`), 'LAeq');
     // Needle and average marker point at the level: 20..120 dB over 240°.
     const angle = (db) => (240 * (db - 20)) / 100 - 120;
     const gauge = await evaluate(`({
@@ -264,7 +264,7 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     const layout = await evaluate(`(() => {
       const box = (s) => { const r = document.querySelector(s).getBoundingClientRect(); return { top: r.top, bottom: r.bottom, h: r.height }; };
       return { inner: innerHeight, scroll: document.documentElement.scrollHeight,
-        parts: Object.fromEntries(['.top', '.hero', '.stats', '.history', '.peaks', '.scope'].map((s) => [s, box(s)])) };
+        parts: Object.fromEntries(['.top', '.hero', '.peaks', '.history', '.bars', '.scope'].map((s) => [s, box(s)])) };
     })()`);
     assert.ok(layout.scroll <= layout.inner, `page scrolls: ${layout.scroll} > ${layout.inner}`);
     for (const [part, { bottom, h }] of Object.entries(layout.parts)) {
@@ -429,8 +429,8 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     await page('Page.reload');
     await waitFor(`!window.beforeReload && !!window.schall`);
     assert.equal(await text('#averaging'), 'Ø 30 s');
-    assert.equal(await text('#leq-name'), 'LAeq');
-    assert.equal(await text('#max-name'), 'LAFmax');
+    assert.equal(await evaluate(`document.querySelector('#leq-name').title`), 'LAeq');
+    assert.equal(await evaluate(`document.querySelector('#max-name').title`), 'LAFmax');
     // The microphone is already allowed, so measuring resumes without a tap.
     await waitFor(`document.body.dataset.state === 'running'`);
   });

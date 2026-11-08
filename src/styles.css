@@ -356,7 +356,7 @@ button:disabled {
 .hero {
   flex: none;
   display: grid;
-  grid-template-columns: minmax(0, 176px) 1fr;
+  grid-template-columns: minmax(0, 168px) minmax(0, 1fr);
   align-items: center;
   gap: 10px;
 }
@@ -508,63 +508,10 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
-/* One panel, split by hairlines (the gap shows the panel's line colour). */
-.stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  overflow: hidden;
-  border-radius: 20px;
-  border: 1px solid var(--hair);
-  background: var(--hair);
-  box-shadow: var(--edge);
-}
-
-.tile {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding: 8px 7px 7px 9px;
-  background: var(--card);
-}
-
-.tile.main {
-  background: var(--card-hi);
-}
-
-.tile .label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tile .value {
-  margin-top: 1px;
-  font-size: 19px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--muted);
-}
-
-.tile.main .value {
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  color: var(--text);
-}
-
-.tile .name {
-  font-size: 10px;
-  color: var(--faint);
-}
-
 .history {
   flex: 1 1 0;
-  min-height: 84px;
-  max-height: 124px;
+  min-height: 120px;
+  max-height: 230px;
   display: flex;
   flex-direction: column;
   padding-bottom: 6px;
@@ -578,10 +525,84 @@ button:disabled {
   cursor: zoom-out;
 }
 
-#history {
+.chart {
+  position: relative;
   flex: 1;
   min-height: 0;
+}
+
+#history {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
+}
+
+/* Average, maximum, minimum and peak on the chart's dB scale; level-view.js
+   places value and fill from the chart's scale. */
+.bars {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 128px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.bar {
+  position: relative;
+  color: var(--muted);
+}
+
+.bar i {
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  top: 100%;
+  border-radius: 5px 5px 2px 2px;
+  background: linear-gradient(180deg, currentColor, color-mix(in srgb, currentColor 25%, transparent));
+  box-shadow: 0 0 10px -2px currentColor;
+  transition:
+    top 0.25s var(--ease),
+    color 0.25s;
+}
+
+.bar.leq {
+  color: var(--accent);
+}
+
+.bar .v {
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text);
+  transition: top 0.25s var(--ease);
+}
+
+.bar .k {
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  bottom: 0;
+  text-align: center;
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--faint);
+}
+
+.bar.empty i {
+  display: none;
+}
+
+.bar.empty .v {
+  top: auto !important;
+  bottom: 16px;
+  color: var(--faint);
 }
 
 .card-head .card-note {
@@ -625,7 +646,7 @@ button:disabled {
 }
 
 .peaks.max .hz {
-  font-size: 30px;
+  font-size: 26px;
 }
 
 .peaks.max .rank {
@@ -641,10 +662,51 @@ button:disabled {
 
 /* --- Frequencies --- */
 
+/* Beside the gauge: frequency and level; note or harmonic when enlarged. */
 .peaks {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 8px 8px 6px;
+}
+
+.peaks .card-head {
+  margin: 0 2px 4px 4px;
+}
+
+.peaks .card-title {
+  min-width: 0;
+  letter-spacing: 0.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peaks .chip {
   flex: none;
-  padding-top: 8px;
-  padding-bottom: 6px;
+  white-space: nowrap;
+}
+
+.peaks:not(.max) .peak-list li {
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 2px 4px;
+}
+
+.peaks:not(.max) .meta {
+  display: none;
+}
+
+.peaks:not(.max) .hz {
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.peaks:not(.max) .db {
+  min-width: 0;
+  font-size: 11px;
 }
 
 .peak-list {
@@ -1037,22 +1099,20 @@ button:disabled {
 
 /* Short screens (iPhone SE and the like): the history chart gives way to
    the spectrum; its header with duration and reset stays. */
-@media (max-height: 720px) {
-  .history {
+/* Very short screens: the history chart gives way to the spectrum; its
+   header with the duration stays. */
+@media (max-height: 560px) {
+  .history:not(.max) {
     flex: none;
     min-height: 0;
   }
 
-  .history .card-head {
+  .history:not(.max) .card-head {
     margin-bottom: 0;
   }
 
-  #history {
+  .history:not(.max) .chart {
     display: none;
-  }
-
-  .history.max #history {
-    display: block;
   }
 }
 

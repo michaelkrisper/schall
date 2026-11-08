@@ -22,7 +22,7 @@ an aircraft cabin. Record it, play it back, keep it as a WAV file.
 ![WebGL2](https://img.shields.io/badge/graphics-WebGL2-990000)
 ![PWA](https://img.shields.io/badge/PWA-installable%20%C2%B7%20offline-5a0fc8)
 
-<img src="docs/screenshot-main.webp" width="250" alt="The one screen: current level, average, maximum, minimum, peak, history chart, the strongest frequencies with notes and steadiness bars, spectrum with numbered markers and spectrogram">
+<img src="docs/screenshot-main.webp" width="250" alt="The one screen: dial with the current level, the strongest frequencies, history chart with bars for average, maximum, minimum and peak, spectrum with numbered markers and spectrogram">
 &nbsp;
 <img src="docs/screenshot-recordings.webp" width="250" alt="Recordings sheet with a saved recording and play, download and delete buttons">
 &nbsp;
@@ -48,20 +48,20 @@ an aircraft cabin. Record it, play it back, keep it as a WAV file.
 
 ## Features
 
-Everything on one screen, no tabs: level at the top, frequencies below,
-recordings and settings behind the buttons in the top bar.
+Everything on one screen, no tabs: the dial and the strongest frequencies at
+the top, the history below, then spectrum and spectrogram; recordings and
+settings behind the buttons in the top bar. A tap enlarges any of them.
 
 **Level**
 
 - Current level on a dial: the needle shows the level, a bright arc the range
   from minimum to maximum, a triangle the average. In digits below, with an
   everyday description ("Normales Gespräch", "Starker Straßenverkehr").
-- **Average (Leq)** and **maximum** since you started, plus minimum, peak and
-  measuring time.
+- One span for everything (1 s, 10 s, 30 s, 60 s or since the start): the
+  history chart, and next to it **average (Leq)**, **maximum**, minimum and
+  peak as bars on the chart's scale, the dial's arc and the strongest
+  frequencies.
 - dB(A) with time weighting Fast (125 ms), as defined by IEC 61672-1.
-- History chart over the same span as the strongest frequencies (1 s to 60 s
-  or since the start), with the average marked (on short screens it gives way
-  to the spectrum).
 
 **Frequencies**
 
@@ -123,10 +123,11 @@ adjusted in 0.5 dB steps.
 
 - **Average noise** (a room, a street, a neighbour): tap *Neu starten* (the
   circular arrow in the top bar), keep
-  the phone still and away from your body, and let it run. The average
-  (LAeq) settles after a minute or two; the maximum shows the loudest moment.
-- **Main frequency of a machine, fan or engine:** set the averaging next to
-  *Stärkste Frequenzen* to *Ø 10 s*, *Ø 60 s* or *Ø gesamt* and wait a few seconds. Steady tones move to the top,
+  the phone still and away from your body, set the span to *Ø gesamt* and let
+  it run. The average (Ø, LAeq) settles after a minute or two; Max shows the
+  loudest moment.
+- **Main frequency of a machine, fan or engine:** set the span next to
+  *Frequenzen* to *Ø 10 s*, *Ø 60 s* or *Ø gesamt* and wait a few seconds. Steady tones move to the top,
   their harmonics are marked. In an aircraft cabin, a car or next to a fan,
   the first entries are the engine, blade or motor tones.
 - **Tuning or pitch:** the first entry shows the note and cents; with
