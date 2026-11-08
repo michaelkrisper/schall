@@ -4,7 +4,7 @@ name: Test and deploy
 # DSP core to WebAssembly, runs all tests (including the app in headless Chrome with a fake
 # microphone) and publishes src/ to GitHub Pages on every push to main. The
 # service worker gets the commit stamped in, so each release installs a fresh
-# app cache.
+# app cache, and the settings show the version tag the commit got.
 
 on:
   push:
@@ -37,13 +37,13 @@ jobs:
       - run: npm run test:rust
       - run: npm run wasm
       - run: npm run check
-      - name: Stamp version
-        if: github.event_name != 'pull_request'
-        run: sed -i "s/__VERSION__/${GITHUB_SHA::8}/" src/sw.js
-      - uses: actions/upload-pages-artifact@v5
+      # Unstamped: the version tag only exists once the version job has run.
+      - uses: actions/upload-artifact@v7
         if: github.event_name != 'pull_request'
         with:
+          name: site
           path: src
+          retention-days: 1
 
   # Tags every tested commit on main with the next patch version (vX.Y.Z).
   version:
@@ -79,11 +79,29 @@ jobs:
       name: github-pages
       url: ${{ steps.pages.outputs.page_url }}
     steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: site
+          path: site
+      - name: Stamp version
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          sed -i "s/__VERSION__/${GITHUB_SHA::8}/" site/sw.js
+          sed -i "s/__APP_VERSION__/${VERSION#v}/" site/index.html
+          grep -q "'${GITHUB_SHA::8}'" site/sw.js
+          grep -q ">${VERSION#v}<" site/index.html
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
       - uses: actions/configure-pages@v6
       - id: pages
         uses: actions/deploy-pages@v5
 
       - name: Smoke test
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
           set -euo pipefail
           live="${{ steps.pages.outputs.page_url }}"
@@ -97,4 +115,5 @@ jobs:
             [ "$code" = 200 ] || { echo "::error::/$f returned $code"; exit 1; }
           done
           curl -s "${live}sw.js" | grep -q "'${GITHUB_SHA::8}'" || { echo "::error::sw.js is not stamped with this commit"; exit 1; }
+          curl -s "$live" | grep -q ">${VERSION#v}<" || { echo "::error::index.html is not stamped with ${VERSION}"; exit 1; }
           curl -sI "${live}dsp.wasm" | grep -qi '^content-type: application/wasm' || { echo "::error::dsp.wasm has the wrong content type"; exit 1; }
