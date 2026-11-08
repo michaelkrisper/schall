@@ -67,26 +67,28 @@
           <div id="class" class="class">&nbsp;</div>
         </div>
       </div>
-      <div class="stats">
-        <div class="tile main"><span class="label">Durchschnitt</span><span id="leq" class="value">–</span><span id="leq-name" class="name">LAeq</span></div>
-        <div class="tile main"><span class="label">Maximum</span><span id="max" class="value">–</span><span id="max-name" class="name">LAFmax</span></div>
-        <div class="tile"><span class="label">Minimum</span><span id="min" class="value">–</span></div>
-        <div class="tile"><span class="label">Spitze</span><span id="peak" class="value">–</span></div>
-      </div>
+      <section class="card peaks" title="Antippen zum Vergrößern">
+        <div class="card-head">
+          <span class="card-title">Frequenzen</span>
+          <button id="averaging" class="chip small" type="button" aria-label="Zeitraum wechseln">Ø 10 s</button>
+        </div>
+        <ol id="peak-list" class="peak-list"></ol>
+      </section>
     </section>
     <section class="card history">
       <div class="card-head">
         <span class="card-title">Verlauf</span>
         <span id="duration" class="card-note">0:00</span>
       </div>
-      <canvas id="history"></canvas>
-    </section>
-    <section class="card peaks" title="Antippen zum Vergrößern">
-      <div class="card-head">
-        <span class="card-title">Stärkste Frequenzen</span>
-        <button id="averaging" class="chip small" type="button" aria-label="Mittelung wechseln">Ø 10 s</button>
+      <div class="chart">
+        <canvas id="history"></canvas>
+        <div class="bars">
+          <div id="leq-name" class="bar leq" title="LAeq"><span id="leq" class="v">–</span><i></i><span class="k">Ø</span></div>
+          <div id="max-name" class="bar" title="LAFmax"><span id="max" class="v">–</span><i></i><span class="k">Max</span></div>
+          <div id="min-name" class="bar" title="LAFmin"><span id="min" class="v">–</span><i></i><span class="k">Min</span></div>
+          <div id="peak-name" class="bar" title="LApeak"><span id="peak" class="v">–</span><i></i><span class="k">Spitze</span></div>
+        </div>
       </div>
-      <ol id="peak-list" class="peak-list"></ol>
     </section>
     <section class="card scope">
       <canvas id="scope-gl"></canvas>
@@ -141,9 +143,10 @@
     <section>
       <h3>Was die Werte bedeuten</h3>
       <dl>
-        <dt>Durchschnitt (Leq)</dt><dd>Energetischer Mittelwert seit „Neu starten“, wie bei Lärmmessungen üblich.</dd>
-        <dt>Zeiger</dt><dd>Aktueller Pegel in dB(A), Zeitbewertung Fast (125 ms). Der helle Bogen reicht vom Minimum bis zum Maximum seit „Neu starten“, das Dreieck zeigt den Durchschnitt.</dd>
-        <dt>Maximum</dt><dd>Höchster Pegel (Fast). Spitze: höchster Momentanwert.</dd>
+        <dt>Zeitraum</dt><dd>Der Knopf „Ø“ wählt 1 s, 10 s, 30 s, 60 s oder „gesamt“ (seit „Neu starten“). Verlauf, Balken, Bogen am Zeiger und die Frequenzen beziehen sich alle auf diesen Zeitraum.</dd>
+        <dt>Ø (Leq)</dt><dd>Energetischer Mittelwert im Zeitraum, wie bei Lärmmessungen üblich.</dd>
+        <dt>Zeiger</dt><dd>Aktueller Pegel in dB(A), Zeitbewertung Fast (125 ms). Der helle Bogen reicht vom Minimum bis zum Maximum im Zeitraum, das Dreieck zeigt den Durchschnitt.</dd>
+        <dt>Max, Min, Spitze</dt><dd>Höchster und niedrigster Pegel (Fast) im Zeitraum; Spitze: höchster Momentanwert.</dd>
         <dt>Stärkste Frequenzen</dt><dd>Spektrum und Liste vergrößern sich beim Antippen. Die Töne werden über die Zeit verfolgt (1 s, 10 s, 30 s, 60 s oder seit „Neu starten“, je nach Mittelung; der Verlauf zeigt denselben Zeitraum). Vorne steht, was mindestens die halbe Zeit am lautesten da ist: Ein gleichbleibender Ton schlägt einen kurzen lauten. Der Balken zeigt, wie beständig ein Ton ist (voll = die ganze Zeit), die Zahl seinen typischen Pegel. „2× ①“ heißt doppelte Frequenz von Nummer 1, typisch für Motoren und Lüfter. Auflösung ca. 3 Hz (FFT mit 16384 Punkten), Genauigkeit ca. 0,1 Hz.</dd>
       </dl>
     </section>
