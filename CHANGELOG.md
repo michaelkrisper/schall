@@ -4,6 +4,9 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+This file ends with 1.3.0. Later changes are listed in the
+[GitHub releases](https://github.com/michaelkrisper/schall/releases).
+
 ## [1.3.0] - 2026-11-01
 
 ### Changed
