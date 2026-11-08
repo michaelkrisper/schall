@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Schall</title>
 <meta name="description" content="Schallpegelmesser und Frequenzanalyse im Browser: Durchschnitt, Maximum und die stärksten Frequenzen, mit Aufnahme.">
-<meta name="theme-color" content="#08090c">
+<meta name="theme-color" content="#07080b">
 <meta name="color-scheme" content="dark">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -35,19 +35,21 @@
     <button id="record" class="icon-btn record" type="button" aria-label="Aufnehmen" disabled>
       <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><circle class="i-rec" cx="12" cy="12" r="6"/><rect class="i-stop" x="7" y="7" width="10" height="10" rx="2"/></svg>
     </button>
-    <button id="recordings-btn" class="icon-btn" type="button" aria-label="Aufnahmen">
-      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h9M4 18h6"/><path class="i-fill" d="M16 14.5v6l5-3Z"/></svg>
-      <span id="rec-count" class="badge" hidden></span>
-    </button>
-    <button id="toggle" class="icon-btn" type="button" aria-label="Pause">
-      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M8.5 5v14M15.5 5v14"/><path class="i-play" d="M7 4.5v15l12-7.5Z"/></svg>
-    </button>
-    <button id="reset" class="icon-btn reset" type="button" aria-label="Neu starten">
-      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4v4.5H15"/></svg>
-    </button>
-    <button id="settings-btn" class="icon-btn" type="button" aria-label="Einstellungen">
-      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
-    </button>
+    <div class="actions">
+      <button id="recordings-btn" class="icon-btn" type="button" aria-label="Aufnahmen">
+        <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h9M4 18h6"/><path class="i-fill" d="M16 14.5v6l5-3Z"/></svg>
+        <span id="rec-count" class="badge" hidden></span>
+      </button>
+      <button id="toggle" class="icon-btn" type="button" aria-label="Pause">
+        <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M8.5 5v14M15.5 5v14"/><path class="i-play" d="M7 4.5v15l12-7.5Z"/></svg>
+      </button>
+      <button id="reset" class="icon-btn reset" type="button" aria-label="Neu starten">
+        <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4v4.5H15"/></svg>
+      </button>
+      <button id="settings-btn" class="icon-btn" type="button" aria-label="Einstellungen">
+        <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+      </button>
+    </div>
   </header>
 
   <main class="view">
@@ -58,7 +60,7 @@
           <path id="gauge-range" class="gauge-range"/>
           <g id="gauge-ticks" class="gauge-ticks"></g>
           <path id="gauge-avg" class="gauge-avg" d="M100 7l-5-7h10Z"/>
-          <g id="gauge-needle" class="gauge-needle"><path d="M100 20L102.5 100h-5Z"/><circle cx="100" cy="100" r="5"/></g>
+          <g id="gauge-needle" class="gauge-needle"><path d="M100 22L102 100h-4Z"/><circle class="hub" cx="100" cy="100" r="5.5"/></g>
         </svg>
         <div class="readout">
           <div class="now"><span id="now">–</span><span class="unit">dB(A)</span></div>

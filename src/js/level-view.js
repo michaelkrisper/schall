@@ -39,8 +39,13 @@ function svg(parent, tag, attrs) {
 // The static part: coloured zones, ticks and labels.
 function buildDial() {
   const edges = [DIAL_MIN, ...ZONE_EDGES, DIAL_MAX];
+  const zones = $('gauge-zones');
+  svg(zones, 'path', { d: arc(DIAL_MIN, DIAL_MAX, 88), class: 'track' });
+  // Segments with small gaps between them; the outer ends stay flush with the track.
   for (let z = 0; z < ZONE_COLORS.length; z++) {
-    svg($('gauge-zones'), 'path', { d: arc(edges[z], edges[z + 1], 88), stroke: ZONE_COLORS[z] });
+    const from = edges[z] + (z ? 0.6 : 0);
+    const to = edges[z + 1] - (z < ZONE_COLORS.length - 1 ? 0.6 : 0);
+    svg(zones, 'path', { d: arc(from, to, 88), stroke: ZONE_COLORS[z] });
   }
   const ticks = $('gauge-ticks');
   for (let db = DIAL_MIN; db <= DIAL_MAX; db += 10) {
@@ -184,8 +189,13 @@ export function createLevelView() {
         if (values[i] > b) b = values[i];
       }
       if (!Number.isFinite(b)) continue;
+      const top = plot.y(b + off);
       ctx.fillStyle = ZONE_COLORS[levelZone(b + off)];
-      ctx.fillRect(c, plot.y(b + off), 1, Math.max(1.5, plot.y(a + off) - plot.y(b + off)));
+      // A faint area below the line, then the range of the slice on top.
+      ctx.globalAlpha = 0.12;
+      ctx.fillRect(c, top, 1, plot.bottom - top);
+      ctx.globalAlpha = 1;
+      ctx.fillRect(c, top, 1, Math.max(1.5, plot.y(a + off) - top));
     }
   }
 
