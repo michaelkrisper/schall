@@ -180,12 +180,7 @@ export function createLevelView() {
   // area that follows the loudest level of each slice.
   function columns(plot, values, slots, off) {
     const missing = slots - values.length;
-    const fade = ctx.createLinearGradient(0, plot.top, 0, plot.bottom);
-    fade.addColorStop(0, 'rgb(255 255 255 / 0.1)');
-    fade.addColorStop(1, 'rgb(255 255 255 / 0)');
-    ctx.beginPath();
-    let first = -1;
-    let last = -1;
+    const tops = [];
     for (let c = 0; c < plot.right; c++) {
       const i0 = Math.max(0, Math.floor((c * slots) / plot.right) - missing);
       const i1 = Math.floor(((c + 1) * slots) / plot.right) - missing;
@@ -197,18 +192,26 @@ export function createLevelView() {
       }
       if (!Number.isFinite(b)) continue;
       const top = plot.y(b + off);
-      if (first < 0) {
-        first = c;
-        ctx.moveTo(c, top);
-      } else ctx.lineTo(c, top);
-      last = c + 1;
-      ctx.lineTo(last, top);
+      tops.push(c, top);
       ctx.fillStyle = ZONE_COLORS[levelZone(b + off)];
       ctx.fillRect(c, top, 1, Math.max(1.5, plot.y(a + off) - top));
     }
-    if (first < 0) return;
-    ctx.lineTo(last, plot.bottom);
-    ctx.lineTo(first, plot.bottom);
+    area(plot, tops);
+  }
+
+  // `tops`: column, y pairs; the area goes under what is already drawn.
+  function area(plot, tops) {
+    if (!tops.length) return;
+    const fade = ctx.createLinearGradient(0, plot.top, 0, plot.bottom);
+    fade.addColorStop(0, 'rgb(255 255 255 / 0.1)');
+    fade.addColorStop(1, 'rgb(255 255 255 / 0)');
+    ctx.beginPath();
+    ctx.moveTo(tops[0], plot.bottom);
+    for (let k = 0; k < tops.length; k += 2) {
+      ctx.lineTo(tops[k], tops[k + 1]);
+      ctx.lineTo(tops[k] + 1, tops[k + 1]);
+    }
+    ctx.lineTo(tops[tops.length - 2] + 1, plot.bottom);
     ctx.fillStyle = fade;
     ctx.globalCompositeOperation = 'destination-over';
     ctx.fill();

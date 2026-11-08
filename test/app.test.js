@@ -294,7 +294,7 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     assert.equal(await text('#averaging'), 'Ø 10 s');
   });
 
-  it('enlarges the strongest frequencies and the spectrum on a tap', async () => {
+  it('enlarges the gauge, the strongest frequencies and the spectrum on a tap', async () => {
     const full = (s) =>
       evaluate(
         `(() => { const r = document.querySelector('${s}').getBoundingClientRect(); return r.height > innerHeight * 0.8; })()`,
@@ -320,7 +320,16 @@ describe('app in a browser', { skip: !chrome && 'no Chrome found', timeout: 90_0
     assert.ok((await filled()) >= before, 'spectrogram carries on when enlarged');
     await tap();
     assert.ok(!(await full('.scope')), 'spectrum back');
+    assert.ok(!(await full('.peaks')), 'shrinking the spectrum enlarges nothing else');
     assert.ok((await filled()) >= before, 'spectrogram carries on when shrunk');
+    await click('.history');
+    assert.ok(await full('.history'), 'history enlarged');
+    await click('.history');
+    assert.ok(!(await full('.history')), 'history back');
+    await click('.dial');
+    assert.ok(await full('.dial'), 'gauge enlarged');
+    await click('.dial');
+    assert.ok(!(await full('.dial')), 'gauge back');
   });
 
   it('records, lists and exports a WAV file', async () => {
