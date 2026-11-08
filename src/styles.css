@@ -363,6 +363,45 @@ button:disabled {
 
 .dial {
   position: relative;
+  cursor: zoom-in;
+}
+
+/* Enlarged: the gauge as big as the screen allows, the reading below it. */
+.dial.max {
+  position: fixed;
+  z-index: 5;
+  inset: var(--top) max(14px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 14px)
+    max(14px, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg);
+  box-shadow: 0 0 0 100vmax var(--bg);
+  cursor: zoom-out;
+  animation: grow 0.22s var(--ease);
+}
+
+.dial.max .gauge {
+  width: min(100%, 62dvh);
+}
+
+.dial.max .readout {
+  position: static;
+  margin-top: -9vmin;
+}
+
+.dial.max .now {
+  font-size: clamp(56px, 18vw, 96px);
+}
+
+.dial.max .class {
+  margin-top: 8px;
+  font-size: 17px;
+}
+
+.dial.max .gauge-ticks text {
+  font-size: 8px;
 }
 
 .gauge {
@@ -529,6 +568,14 @@ button:disabled {
   display: flex;
   flex-direction: column;
   padding-bottom: 6px;
+}
+
+.history {
+  cursor: zoom-in;
+}
+
+.history.max {
+  cursor: zoom-out;
 }
 
 #history {
@@ -1002,6 +1049,10 @@ button:disabled {
 
   #history {
     display: none;
+  }
+
+  .history.max #history {
+    display: block;
   }
 }
 

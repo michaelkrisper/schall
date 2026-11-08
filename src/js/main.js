@@ -6,7 +6,7 @@ import { createLevelView } from './level-view.js';
 import { startRecording } from './recorder.js';
 import { createRecordingsView } from './recordings-view.js';
 import { DEFAULT_OFFSET, loadSettings, SPANS, saveSettings } from './settings.js';
-import { createSpectrumView } from './spectrum-view.js';
+import { createSpectrumView, toggleMax } from './spectrum-view.js';
 import { LevelStats, WEIGHTINGS } from './stats.js';
 
 const $ = (id) => document.getElementById(id);
@@ -299,7 +299,15 @@ $('recordings-btn').addEventListener('click', () => {
   $('recordings').showModal();
 });
 $('recordings').addEventListener('close', () => recordings.stopPlayer());
+const dial = document.querySelector('.dial');
+dial.addEventListener('click', () => toggleMax(dial));
+const history = document.querySelector('.history');
+history.addEventListener('click', () => {
+  toggleMax(history);
+  level.draw(stats, settings); // new size, also while paused
+});
 // One span for the strongest frequencies (and the DSP core's average) and the history chart.
+
 $('averaging').addEventListener('click', (e) => {
   e.stopPropagation(); // not a tap that enlarges the card
   settings.span = (settings.span + 1) % SPANS.length;

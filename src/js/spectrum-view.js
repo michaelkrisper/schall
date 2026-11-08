@@ -93,6 +93,13 @@ void main() {
 
 const $ = (id) => document.getElementById(id);
 
+/** A tap enlarges a view (card or gauge) to the whole screen, another one shrinks it back. */
+export function toggleMax(view) {
+  const on = !view.classList.contains('max');
+  for (const v of document.querySelectorAll('.max')) v.classList.remove('max');
+  view.classList.toggle('max', on);
+}
+
 function palette() {
   const lut = new Uint8Array(256 * 4);
   for (let i = 0; i < 256; i++) {
@@ -427,18 +434,15 @@ export function createSpectrumView() {
     } else lowerSince = 0;
   }
 
-  // A tap enlarges the card to the whole screen, another one shrinks it back.
-  function toggleMax(card) {
-    const on = !card.classList.contains('max');
-    for (const c of document.querySelectorAll('.card.max')) c.classList.remove('max');
-    card.classList.toggle('max', on);
-  }
   const peaksCard = list.closest('.card');
   peaksCard.addEventListener('click', () => toggleMax(peaksCard));
 
   // Cursor: hold or drag on the plot; stays 2.5 s after letting go. A short
-  // tap without moving enlarges the plot instead.
+  // tap without moving enlarges the plot instead. That happens on the click,
+  // not on pointerup: otherwise the click that follows would hit whatever is
+  // under the finger once the layout has changed (and enlarge that).
   let down = null;
+  let tapped = false;
   overlay.addEventListener('pointerdown', (e) => {
     overlay.setPointerCapture(e.pointerId);
     clearTimeout(cursorTimer);
@@ -456,9 +460,9 @@ export function createSpectrumView() {
     clearTimeout(cursorTimer);
     if (e.type === 'pointerup' && down && e.timeStamp - down.t < 300) {
       down = null;
+      tapped = true;
       cursorX = null;
       drawOverlay();
-      toggleMax(box);
       return;
     }
     down = null;
@@ -468,6 +472,10 @@ export function createSpectrumView() {
     }, 2500);
   };
   overlay.addEventListener('pointerup', release);
+  overlay.addEventListener('click', () => {
+    if (tapped) toggleMax(box);
+    tapped = false;
+  });
   overlay.addEventListener('pointercancel', release);
 
   new ResizeObserver(() => visible && resize()).observe(box);
