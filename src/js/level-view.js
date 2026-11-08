@@ -39,8 +39,13 @@ function svg(parent, tag, attrs) {
 // The static part: coloured zones, ticks and labels.
 function buildDial() {
   const edges = [DIAL_MIN, ...ZONE_EDGES, DIAL_MAX];
+  const zones = $('gauge-zones');
+  svg(zones, 'path', { d: arc(DIAL_MIN, DIAL_MAX, 88), class: 'track' });
+  // Segments with small gaps between them; the outer ends stay flush with the track.
   for (let z = 0; z < ZONE_COLORS.length; z++) {
-    svg($('gauge-zones'), 'path', { d: arc(edges[z], edges[z + 1], 88), stroke: ZONE_COLORS[z] });
+    const from = edges[z] + (z ? 0.6 : 0);
+    const to = edges[z + 1] - (z < ZONE_COLORS.length - 1 ? 0.6 : 0);
+    svg(zones, 'path', { d: arc(from, to, 88), stroke: ZONE_COLORS[z] });
   }
   const ticks = $('gauge-ticks');
   for (let db = DIAL_MIN; db <= DIAL_MAX; db += 10) {
@@ -171,9 +176,16 @@ export function createLevelView() {
     }
   }
 
-  // One column per pixel: the range of levels in its time slice.
+  // One column per pixel: the range of levels in its time slice, over a faint
+  // area that follows the loudest level of each slice.
   function columns(plot, values, slots, off) {
     const missing = slots - values.length;
+    const fade = ctx.createLinearGradient(0, plot.top, 0, plot.bottom);
+    fade.addColorStop(0, 'rgb(255 255 255 / 0.1)');
+    fade.addColorStop(1, 'rgb(255 255 255 / 0)');
+    ctx.beginPath();
+    let first = -1;
+    let last = -1;
     for (let c = 0; c < plot.right; c++) {
       const i0 = Math.max(0, Math.floor((c * slots) / plot.right) - missing);
       const i1 = Math.floor(((c + 1) * slots) / plot.right) - missing;
@@ -184,9 +196,23 @@ export function createLevelView() {
         if (values[i] > b) b = values[i];
       }
       if (!Number.isFinite(b)) continue;
+      const top = plot.y(b + off);
+      if (first < 0) {
+        first = c;
+        ctx.moveTo(c, top);
+      } else ctx.lineTo(c, top);
+      last = c + 1;
+      ctx.lineTo(last, top);
       ctx.fillStyle = ZONE_COLORS[levelZone(b + off)];
-      ctx.fillRect(c, plot.y(b + off), 1, Math.max(1.5, plot.y(a + off) - plot.y(b + off)));
+      ctx.fillRect(c, top, 1, Math.max(1.5, plot.y(a + off) - top));
     }
+    if (first < 0) return;
+    ctx.lineTo(last, plot.bottom);
+    ctx.lineTo(first, plot.bottom);
+    ctx.fillStyle = fade;
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   function timeLabels(right, h, range, sinceReset) {

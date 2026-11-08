@@ -1,15 +1,20 @@
 :root {
-  --bg: #08090c;
+  --bg: #07080b;
   --card: #111318;
-  --card-2: #181b22;
+  --card-hi: #15181e;
+  --card-2: #1c2028;
   --border: rgb(255 255 255 / 0.07);
+  --hair: rgb(255 255 255 / 0.06);
+  --edge: inset 0 1px 0 rgb(255 255 255 / 0.06);
   --text: #f4f4f5;
   --muted: #a1a1aa;
   --faint: #71717a;
   --accent: #22d3ee;
   --amber: #fbbf24;
   --red: #f43f5e;
+  --green: #34d399;
   --gap: 10px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   /* Clear of the status bar and of the blur iOS draws below it. */
   --top: calc(env(safe-area-inset-top) + 14px);
   color-scheme: dark;
@@ -32,6 +37,13 @@ body {
   overflow: hidden;
   overscroll-behavior: none;
   background: var(--bg);
+}
+
+/* A faint glow from the top; cards are opaque, so it only shows between them. */
+body {
+  background:
+    radial-gradient(90% 45% at 50% -8%, rgb(34 211 238 / 0.09), transparent 70%),
+    radial-gradient(70% 40% at 100% 105%, rgb(244 63 94 / 0.05), transparent 70%), var(--bg);
 }
 
 /* Native feel: scrolling yes, zooming (pinch, double tap) no. */
@@ -64,6 +76,22 @@ button {
   border: 0;
   padding: 0;
   cursor: pointer;
+}
+
+button {
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    transform 0.15s var(--ease);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 button:disabled {
@@ -104,27 +132,35 @@ button:disabled {
 
 .brand {
   margin: 0 auto 0 2px;
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  background: linear-gradient(100deg, #fff 30%, #a5f3fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .status {
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   color: var(--muted);
-  margin-right: 6px;
+  margin-right: 4px;
 }
 
 .status.running::before,
 .status.rec::before {
   content: '';
   display: inline-block;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   margin-right: 6px;
   border-radius: 50%;
-  background: #34d399;
+  background: var(--green);
   vertical-align: 1px;
+  box-shadow: 0 0 0 0 rgb(52 211 153 / 0.6);
+  animation: pulse 2s infinite;
 }
 
 .status.rec {
@@ -133,6 +169,7 @@ button:disabled {
 
 .status.rec::before {
   background: var(--red);
+  box-shadow: 0 0 8px var(--red);
   animation: blink 1s steps(2) infinite;
 }
 
@@ -142,14 +179,43 @@ button:disabled {
   }
 }
 
+@keyframes pulse {
+  70% {
+    box-shadow: 0 0 0 6px rgb(52 211 153 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(52 211 153 / 0);
+  }
+}
+
 .icon-btn {
   position: relative;
   width: 40px;
   height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
+  border-radius: 50%;
   color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  padding: 2px;
+  border-radius: 22px;
+  background: rgb(255 255 255 / 0.04);
+  border: 1px solid var(--hair);
+  box-shadow: var(--edge);
+}
+
+.actions .icon-btn {
+  width: 38px;
+  height: 38px;
+}
+
+@media (hover: hover) {
+  .top .icon-btn:hover {
+    color: var(--text);
+  }
 }
 
 .icon-btn .i-fill {
@@ -166,6 +232,7 @@ button:disabled {
   padding: 0 4px;
   border-radius: 8px;
   background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg);
   color: #042f35;
   font-size: 10px;
   font-weight: 700;
@@ -179,6 +246,11 @@ button:disabled {
 
 .record .glyph {
   color: var(--red);
+  filter: drop-shadow(0 0 6px rgb(244 63 94 / 0.55));
+}
+
+.recording .record {
+  background: rgb(244 63 94 / 0.14);
 }
 
 .record .i-rec {
@@ -223,10 +295,13 @@ button:disabled {
 }
 
 .card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 10px 12px;
+  background: linear-gradient(180deg, var(--card-hi), var(--card) 60%);
+  border: 1px solid var(--hair);
+  border-radius: 22px;
+  padding: 10px 14px;
+  box-shadow:
+    var(--edge),
+    0 10px 30px -18px rgb(0 0 0 / 0.8);
 }
 
 .card-head {
@@ -238,11 +313,11 @@ button:disabled {
 
 .card-title {
   margin-right: auto;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--faint);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.09em;
 }
 
 .card-note {
@@ -251,24 +326,29 @@ button:disabled {
 }
 
 .chip {
-  height: 30px;
+  height: 32px;
   padding: 0 12px;
-  border-radius: 15px;
+  border-radius: 16px;
   background: var(--card-2);
   border: 1px solid var(--border);
+  box-shadow: var(--edge);
   font-size: 14px;
   font-weight: 600;
 }
 
 .chip.small {
-  height: 26px;
+  height: 24px;
   padding: 0 10px;
+  border-radius: 12px;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--accent);
+  background: rgb(34 211 238 / 0.1);
+  border-color: rgb(34 211 238 / 0.2);
+  box-shadow: none;
 }
 
 .chip:active {
-  background: #252a33;
+  background: #262b35;
 }
 
 /* --- Level --- */
@@ -294,41 +374,59 @@ button:disabled {
 }
 
 .gauge-zones path {
-  stroke-width: 8;
-  opacity: 0.28;
+  stroke-width: 10;
+  opacity: 0.3;
+}
+
+.gauge-zones .track {
+  stroke: #fff;
+  stroke-linecap: round;
+  opacity: 0.04;
 }
 
 .gauge-range {
-  stroke: var(--text);
-  stroke-width: 8;
+  stroke: #fff;
+  stroke-width: 3.5;
   stroke-linecap: round;
-  opacity: 0.8;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 3px rgb(255 255 255 / 0.6));
 }
 
 .gauge-ticks path {
   stroke: var(--faint);
   stroke-width: 1;
+  opacity: 0.7;
 }
 
 .gauge-ticks path.major {
   stroke: var(--muted);
   stroke-width: 1.5;
+  opacity: 1;
 }
 
 .gauge-ticks text {
   fill: var(--faint);
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 500;
   text-anchor: middle;
   dominant-baseline: middle;
 }
 
 .gauge-avg {
   fill: var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+
+.gauge-needle .hub {
+  fill: var(--bg);
+  stroke: currentColor;
+  stroke-width: 2.5;
 }
 
 .gauge-needle {
   fill: currentColor;
   color: var(--muted);
+  filter: drop-shadow(0 0 5px currentColor);
   transform-box: view-box;
   transform-origin: 100px 100px;
   transform: rotate(-120deg);
@@ -348,19 +446,22 @@ button:disabled {
   font-size: clamp(26px, 8.5vw, 34px);
   font-weight: 300;
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.045em;
   white-space: nowrap;
+  text-shadow: 0 0 24px rgb(255 255 255 / 0.15);
 }
 
 .now .unit {
-  margin-left: 3px;
-  font-size: 0.36em;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--muted);
+  margin-left: 4px;
+  font-size: 0.34em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--faint);
+  text-shadow: none;
 }
 
 .class {
+  margin-top: 2px;
   font-size: 11px;
   color: var(--muted);
   white-space: nowrap;
@@ -368,24 +469,33 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
+/* One panel, split by hairlines (the gap shows the panel's line colour). */
 .stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: 1px;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid var(--hair);
+  background: var(--hair);
+  box-shadow: var(--edge);
 }
 
 .tile {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 6px 7px;
-  border-radius: 12px;
+  padding: 8px 7px 7px 9px;
   background: var(--card);
-  border: 1px solid var(--border);
+}
+
+.tile.main {
+  background: var(--card-hi);
 }
 
 .tile .label {
   font-size: 11px;
+  font-weight: 500;
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
@@ -393,14 +503,17 @@ button:disabled {
 }
 
 .tile .value {
+  margin-top: 1px;
   font-size: 19px;
   font-weight: 500;
+  letter-spacing: -0.02em;
   color: var(--muted);
 }
 
 .tile.main .value {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
+  letter-spacing: -0.03em;
   color: var(--text);
 }
 
@@ -435,7 +548,17 @@ button:disabled {
   inset: var(--top) max(14px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 14px)
     max(14px, env(safe-area-inset-left));
   max-height: none;
-  box-shadow: 0 0 0 100vmax var(--bg);
+  box-shadow:
+    var(--edge),
+    0 0 0 100vmax var(--bg);
+  animation: grow 0.22s var(--ease);
+}
+
+@keyframes grow {
+  from {
+    opacity: 0.4;
+    transform: scale(0.97);
+  }
 }
 
 .peaks {
@@ -451,10 +574,17 @@ button:disabled {
 
 .peaks.max .peak-list li {
   padding: 10px;
+  grid-template-columns: 30px 1fr auto auto;
 }
 
 .peaks.max .hz {
   font-size: 30px;
+}
+
+.peaks.max .rank {
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
 }
 
 .peaks.max .meta,
@@ -483,18 +613,19 @@ button:disabled {
   align-items: baseline;
   gap: 10px;
   padding: 2px 6px;
-  border-radius: 7px;
+  border-radius: 9px;
   overflow: hidden;
 }
 
+/* Presence: a wash that gets stronger to the right. */
 .peak-list li::before {
   content: '';
   position: absolute;
-  inset: 0;
-  transform-origin: 0 50%;
-  transform: scaleX(var(--w, 0));
-  background: rgb(251 191 36 / 0.1);
-  transition: transform 0.2s;
+  inset: 0 auto 0 0;
+  width: calc(var(--w, 0) * 100%);
+  background: linear-gradient(90deg, rgb(251 191 36 / 0.03), rgb(251 191 36 / 0.18));
+  border-radius: inherit;
+  transition: width 0.3s var(--ease);
 }
 
 .peak-list .rank {
@@ -503,7 +634,8 @@ button:disabled {
   display: inline-grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--amber);
+  background: linear-gradient(160deg, #fde68a, var(--amber) 60%, #f59e0b);
+  box-shadow: 0 0 8px rgb(251 191 36 / 0.35);
   color: #1c1917;
   font-size: 11px;
   font-weight: 700;
@@ -512,12 +644,18 @@ button:disabled {
 
 .peak-list .empty .rank {
   background: var(--card-2);
+  box-shadow: none;
+  color: var(--faint);
+}
+
+.peak-list .empty .hz {
   color: var(--faint);
 }
 
 .peak-list .hz {
   font-size: 17px;
   font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .peak-list .meta {
@@ -538,6 +676,7 @@ button:disabled {
   min-height: 170px;
   padding: 0;
   overflow: hidden;
+  background: linear-gradient(180deg, #0e1015, #090a0e);
 }
 
 .scope canvas {
@@ -583,8 +722,8 @@ button:disabled {
   grid-template-columns: 1fr auto auto auto;
   align-items: center;
   gap: 2px;
-  padding: 6px;
-  border-radius: 12px;
+  padding: 8px;
+  border-radius: 14px;
 }
 
 .rec + .rec {
@@ -636,8 +775,10 @@ button:disabled {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgb(8 9 12 / 0.94);
-  backdrop-filter: blur(6px);
+  background:
+    radial-gradient(60% 40% at 50% 38%, rgb(34 211 238 / 0.12), transparent 70%), rgb(7 8 11 / 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   text-align: center;
 }
 
@@ -646,20 +787,45 @@ button:disabled {
 }
 
 .start-icon {
-  width: 64px;
-  height: 64px;
-  padding: 14px;
+  width: 76px;
+  height: 76px;
+  padding: 18px;
   border-radius: 50%;
-  background: rgb(34 211 238 / 0.12);
+  background: radial-gradient(circle, rgb(34 211 238 / 0.22), rgb(34 211 238 / 0.06));
+  box-shadow:
+    inset 0 0 0 1px rgb(34 211 238 / 0.35),
+    0 0 40px rgb(34 211 238 / 0.25);
   fill: none;
   stroke: var(--accent);
   stroke-width: 1.6;
   stroke-linecap: round;
+  animation: ring 2.4s var(--ease) infinite;
+}
+
+@keyframes ring {
+  0% {
+    box-shadow:
+      inset 0 0 0 1px rgb(34 211 238 / 0.35),
+      0 0 40px rgb(34 211 238 / 0.25),
+      0 0 0 0 rgb(34 211 238 / 0.3);
+  }
+  100% {
+    box-shadow:
+      inset 0 0 0 1px rgb(34 211 238 / 0.35),
+      0 0 40px rgb(34 211 238 / 0.25),
+      0 0 0 22px rgb(34 211 238 / 0);
+  }
 }
 
 .start h2 {
-  margin: 12px 0 4px;
-  font-size: 26px;
+  margin: 16px 0 4px;
+  font-size: 32px;
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  background: linear-gradient(100deg, #fff 30%, #a5f3fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .start p {
@@ -668,13 +834,17 @@ button:disabled {
 
 .primary {
   width: 100%;
-  height: 50px;
+  height: 52px;
   margin-top: 12px;
-  border-radius: 14px;
-  background: var(--accent);
+  border-radius: 26px;
+  background: linear-gradient(180deg, #67e8f9, var(--accent) 55%, #06b6d4);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.4),
+    0 8px 24px -8px rgb(34 211 238 / 0.6);
   color: #042f35;
   font-size: 17px;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .error {
@@ -691,22 +861,52 @@ button:disabled {
   width: min(520px, 100%);
   max-height: 88dvh;
   margin: auto auto 0;
-  padding: 18px 18px calc(env(safe-area-inset-bottom) + 16px);
+  padding: 24px 18px calc(env(safe-area-inset-bottom) + 16px);
   border: 0;
-  border-radius: 22px 22px 0 0;
-  background: var(--card);
+  border-top: 1px solid var(--border);
+  border-radius: 28px 28px 0 0;
+  background: linear-gradient(180deg, #171a21, var(--card) 120px);
+  box-shadow: 0 -20px 60px rgb(0 0 0 / 0.5);
   color: var(--text);
   -webkit-user-select: text;
   user-select: text;
 }
 
+.sheet[open] {
+  animation: rise 0.28s var(--ease);
+}
+
+/* Grabber, as on native bottom sheets. */
+.sheet::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  margin-left: -18px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.18);
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
 .sheet::backdrop {
-  background: rgb(0 0 0 / 0.55);
+  background: rgb(0 0 0 / 0.5);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .sheet h2 {
   margin: 0 0 8px;
-  font-size: 20px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
 }
 
 .sheet h3 {
@@ -752,13 +952,19 @@ button:disabled {
 .row input {
   width: 96px;
   height: 34px;
-  padding: 0 10px;
-  border-radius: 10px;
+  padding: 0 12px;
+  border-radius: 12px;
+  outline: none;
   border: 1px solid var(--border);
   background: var(--card-2);
   color: var(--text);
   font: inherit;
   font-size: 16px;
+}
+
+.row input:focus {
+  border-color: rgb(34 211 238 / 0.6);
+  box-shadow: 0 0 0 3px rgb(34 211 238 / 0.15);
 }
 
 .row output {
@@ -796,5 +1002,14 @@ button:disabled {
 
   #history {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }
