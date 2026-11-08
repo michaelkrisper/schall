@@ -354,6 +354,8 @@ function averagingLabel() {
 
 // --- Start-up ---
 
+// The deploy stamps the version; a local copy has the placeholder.
+if ($('version').textContent.startsWith('__')) $('version').textContent = 'dev';
 averagingLabel();
 refreshLevel();
 spectrum.show(true, settings);
