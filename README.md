@@ -13,6 +13,7 @@ an aircraft cabin. Record it, play it back, keep it as a WAV file.
 [**Open the app →**](https://michaelkrisper.github.io/schall/)
 
 [![Test and deploy](https://github.com/michaelkrisper/schall/actions/workflows/deploy.yml/badge.svg)](https://github.com/michaelkrisper/schall/actions/workflows/deploy.yml)
+[![Version](https://img.shields.io/github/v/tag/michaelkrisper/schall?sort=semver&label=version)](https://github.com/michaelkrisper/schall/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-2ea44f)](https://michaelkrisper.github.io/schall/)
 ![Node.js 26](https://img.shields.io/badge/Node.js-26-5fa04e)
@@ -247,6 +248,9 @@ checked in, so Rust is only needed to change the core; CI rebuilds it from
 Every push and pull request runs rustfmt, clippy, Biome and all tests; every
 push to `main` then deploys to GitHub Pages; the smoke test afterwards checks the live
 files ([deploy.yml](.github/workflows/deploy.yml)).
+Every merge to `main` is tagged with the next patch version; bundled releases
+with release notes come from the Release workflow (see
+[CONTRIBUTING](CONTRIBUTING.md#versions-and-releases)).
 
 ## Testing
 
@@ -290,8 +294,9 @@ docs/                    screenshots
 ## Contributing
 
 Bug reports, measurements that look wrong and pull requests are welcome; see
-[CONTRIBUTING.md](CONTRIBUTING.md). Changes are listed in
-[CHANGELOG.md](CHANGELOG.md).
+[CONTRIBUTING.md](CONTRIBUTING.md). Changes up to 1.3.0 are listed in
+[CHANGELOG.md](CHANGELOG.md), later ones in the
+[GitHub releases](https://github.com/michaelkrisper/schall/releases).
 
 ## License
 
