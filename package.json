@@ -43,6 +43,6 @@
     "check": "npm run lint && npm test"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.5"
+    "@biomejs/biome": "^2.6.6"
   }
 }
