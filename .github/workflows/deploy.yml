@@ -117,3 +117,29 @@ jobs:
           curl -s "${live}sw.js" | grep -q "'${GITHUB_SHA::8}'" || { echo "::error::sw.js is not stamped with this commit"; exit 1; }
           curl -s "$live" | grep -q ">${VERSION#v}<" || { echo "::error::index.html is not stamped with ${VERSION}"; exit 1; }
           curl -sI "${live}dsp.wasm" | grep -qi '^content-type: application/wasm' || { echo "::error::dsp.wasm has the wrong content type"; exit 1; }
+
+  # The same files on the own server (https://schall.krisperapps.de/). The key may
+  # only write into this app's folder there; this job runs no code from the repo.
+  server:
+    name: krisperapps.de
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: server
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: github-pages
+          path: pages
+      - name: Upload
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir _site
+          tar -xf pages/artifact.tar -C _site
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          echo 'krisperapps.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMchrlhQI1OFJ2cEfQosiydiSPg498c/+Mggebk+zVLO' > ~/.ssh/known_hosts
+          rsync -rtz --delete -e 'ssh -i ~/.ssh/deploy' _site/ deploy@krisperapps.de:./
