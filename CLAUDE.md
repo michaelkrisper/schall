@@ -89,5 +89,6 @@ npm run screenshots   # refresh docs/*.webp via the browser test
 - PRs auto-merge (squash) once CI and the "Linked ticket" check pass; drafts are not merged.
 - Versions exist only as git tags `vX.Y.Z`. Every merge to `main` tags the next patch;
   never edit version numbers in files. Minor/major releases: Actions -> Release.
-- Merging to `main` deploys to GitHub Pages automatically.
+- Merging to `main` deploys to GitHub Pages and to
+  https://schall.krisperapps.de/ automatically.
 - Details: CONTRIBUTING.md.
