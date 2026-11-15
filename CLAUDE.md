@@ -27,7 +27,7 @@ npm run screenshots   # refresh docs/*.webp via the browser test
 
 - CI (`.github/workflows/deploy.yml`, "Test and deploy"): `lint:rust`, `test:rust`,
   `wasm`, `check`; on `main` it tags the next patch version, stamps the commit into `sw.js`
-  and the version into `index.html` (`__APP_VERSION__`, shown in the settings), deploys `src/` to the server and smoke-tests the live files (200s, stamped `sw.js`,
+  and the version into `index.html` (`__APP_VERSION__`, shown in the settings as `v1.2.3`), deploys `src/` to the server and smoke-tests the live files (200s, stamped `sw.js`,
   `application/wasm` content type).
 - The browser test needs Chrome/Chromium (`CHROME=` to point at it) and is skipped
   without one; let CI run it rather than starting browsers locally.
