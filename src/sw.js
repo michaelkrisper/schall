@@ -1,8 +1,8 @@
 // App shell cache. The deploy workflow replaces __VERSION__ with the commit
 // (and __APP_VERSION__ in index.html with the version tag),
 // so every release installs a fresh cache. Recordings live in IndexedDB, not
-// here. Other apps share the origin (michaelkrisper.github.io) and with it the
-// cache storage, so only this app's old caches are removed.
+// here. Other apps may share the origin and with it the cache storage, so only
+// this app's old caches are removed.
 
 const VERSION = '__VERSION__';
 const CACHE = `schall-${VERSION}`;

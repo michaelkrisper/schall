@@ -15,7 +15,7 @@
     "pwa",
     "rust"
   ],
-  "homepage": "https://michaelkrisper.github.io/schall/",
+  "homepage": "https://schall.krisperapps.de/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/michaelkrisper/schall.git"

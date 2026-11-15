@@ -4,7 +4,7 @@ Schall is a sound level meter and frequency analyser PWA: average and maximum le
 (dB(A), Fast), the strongest frequencies over time, recordings stored in the browser.
 DSP is Rust compiled to WebAssembly with SIMD128 (`wasm/`, no_std, no crates) running in
 an AudioWorklet; drawing is WebGL2 and Canvas 2D; the page is plain ES modules without a
-bundler. Deployed to GitHub Pages at https://michaelkrisper.github.io/schall/ by CI.
+bundler. Deployed to the own server at https://schall.krisperapps.de/ by CI.
 The README covers features, DSP details, accuracy and the test inventory.
 
 ## Commands
@@ -27,7 +27,7 @@ npm run screenshots   # refresh docs/*.webp via the browser test
 
 - CI (`.github/workflows/deploy.yml`, "Test and deploy"): `lint:rust`, `test:rust`,
   `wasm`, `check`; on `main` it tags the next patch version, stamps the commit into `sw.js`
-  and the version into `index.html` (`__APP_VERSION__`, shown in the settings), deploys `src/` to Pages and smoke-tests the live files (200s, stamped `sw.js`,
+  and the version into `index.html` (`__APP_VERSION__`, shown in the settings), deploys `src/` to the server and smoke-tests the live files (200s, stamped `sw.js`,
   `application/wasm` content type).
 - The browser test needs Chrome/Chromium (`CHROME=` to point at it) and is skipped
   without one; let CI run it rather than starting browsers locally.
@@ -66,8 +66,8 @@ npm run screenshots   # refresh docs/*.webp via the browser test
   Later changes live only in GitHub releases.
 - A new file under `src/js/` must go into `SHELL` in `src/sw.js` and, if loaded at
   startup, get a `modulepreload` in `src/index.html`; the structure test checks both.
-- The service worker must only delete caches with the `schall-` prefix: other apps share
-  the `michaelkrisper.github.io` origin and its cache storage.
+- The service worker must only delete caches with the `schall-` prefix: cache storage
+  belongs to the origin, which other apps may share (as on `michaelkrisper.github.io`).
 - The report layout (`REPORT_LENGTH`) is shared by `write_report` in `wasm/src/lib.rs`,
   `src/js/worklet.js` and `src/js/stats.js`; change all three together.
 - Keep `process()` allocation-free. The Rust static state must stay fully
@@ -89,6 +89,5 @@ npm run screenshots   # refresh docs/*.webp via the browser test
 - PRs auto-merge (squash) once CI and the "Linked ticket" check pass; drafts are not merged.
 - Versions exist only as git tags `vX.Y.Z`. Every merge to `main` tags the next patch;
   never edit version numbers in files. Minor/major releases: Actions -> Release.
-- Merging to `main` deploys to GitHub Pages and to
-  https://schall.krisperapps.de/ automatically.
+- Merging to `main` deploys to https://schall.krisperapps.de/ automatically.
 - Details: CONTRIBUTING.md.
