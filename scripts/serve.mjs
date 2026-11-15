@@ -1,4 +1,4 @@
-// Serves src/ locally with gzip, like GitHub Pages. Port via PORT, default 8080.
+// Serves src/ locally with gzip, like the live site. Port via PORT, default 8080.
 // The service worker is not registered on localhost, so changes show up on reload.
 
 import { readFile } from 'node:fs/promises';

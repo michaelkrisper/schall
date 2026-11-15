@@ -2,7 +2,7 @@ name: Test and deploy
 
 # Lints (rustfmt, clippy, Biome), runs the Rust unit tests, builds the Rust
 # DSP core to WebAssembly, runs all tests (including the app in headless Chrome with a fake
-# microphone) and publishes src/ to GitHub Pages on every push to main. The
+# microphone) and publishes src/ to https://schall.krisperapps.de/ on every push to main. The
 # service worker gets the commit stamped in, so each release installs a fresh
 # app cache, and the settings show the version tag the commit got.
 
@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: pages-${{ github.ref }}
+  group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -67,17 +67,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-  deploy:
+  # Publishes the site on the own server (https://schall.krisperapps.de/). The key may
+  # only write into this app's folder there; this job runs no code from the repo.
+  server:
+    name: krisperapps.de
     # Only commits that got a version tag: a re-run of an older run deploys nothing.
     needs: [test, version]
     if: needs.version.outputs.version != ''
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.pages.outputs.page_url }}
+    concurrency:
+      group: server
+      cancel-in-progress: false
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -92,19 +92,22 @@ jobs:
           sed -i "s/__APP_VERSION__/${VERSION#v}/" site/index.html
           grep -q "'${GITHUB_SHA::8}'" site/sw.js
           grep -q ">${VERSION#v}<" site/index.html
-      - uses: actions/upload-pages-artifact@v5
-        with:
-          path: site
-      - uses: actions/configure-pages@v6
-      - id: pages
-        uses: actions/deploy-pages@v5
+      - name: Upload
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          echo 'krisperapps.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMchrlhQI1OFJ2cEfQosiydiSPg498c/+Mggebk+zVLO' > ~/.ssh/known_hosts
+          rsync -rtz --delete -e 'ssh -i ~/.ssh/deploy' site/ deploy@krisperapps.de:./
 
       - name: Smoke test
         env:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
           set -euo pipefail
-          live="${{ steps.pages.outputs.page_url }}"
+          live="https://schall.krisperapps.de/"
           for f in "" sw.js manifest.webmanifest dsp.wasm js/main.js js/worklet.js icons/icon-192.png; do
             for attempt in 1 2 3 4 5; do
               code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$live$f" || echo 000)"
@@ -117,29 +120,3 @@ jobs:
           curl -s "${live}sw.js" | grep -q "'${GITHUB_SHA::8}'" || { echo "::error::sw.js is not stamped with this commit"; exit 1; }
           curl -s "$live" | grep -q ">${VERSION#v}<" || { echo "::error::index.html is not stamped with ${VERSION}"; exit 1; }
           curl -sI "${live}dsp.wasm" | grep -qi '^content-type: application/wasm' || { echo "::error::dsp.wasm has the wrong content type"; exit 1; }
-
-  # The same files on the own server (https://schall.krisperapps.de/). The key may
-  # only write into this app's folder there; this job runs no code from the repo.
-  server:
-    name: krisperapps.de
-    needs: [deploy]
-    runs-on: ubuntu-latest
-    concurrency:
-      group: server
-      cancel-in-progress: false
-    steps:
-      - uses: actions/download-artifact@v8
-        with:
-          name: github-pages
-          path: pages
-      - name: Upload
-        env:
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-        run: |
-          mkdir _site
-          tar -xf pages/artifact.tar -C _site
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
-          chmod 600 ~/.ssh/deploy
-          echo 'krisperapps.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMchrlhQI1OFJ2cEfQosiydiSPg498c/+Mggebk+zVLO' > ~/.ssh/known_hosts
-          rsync -rtz --delete -e 'ssh -i ~/.ssh/deploy' _site/ deploy@krisperapps.de:./

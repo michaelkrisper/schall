@@ -10,12 +10,12 @@ How loud is it on average, how loud at its worst, and which frequencies
 dominate: the hum of a motor, the tone of a fan, concert pitch A, the drone in
 an aircraft cabin. Record it, play it back, keep it as a WAV file.
 
-[**Open the app →**](https://michaelkrisper.github.io/schall/)
+[**Open the app →**](https://schall.krisperapps.de/)
 
 [![Test and deploy](https://github.com/michaelkrisper/schall/actions/workflows/deploy.yml/badge.svg)](https://github.com/michaelkrisper/schall/actions/workflows/deploy.yml)
 [![Version](https://img.shields.io/github/v/tag/michaelkrisper/schall?sort=semver&label=version)](https://github.com/michaelkrisper/schall/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-2ea44f)](https://michaelkrisper.github.io/schall/)
+[![Live demo](https://img.shields.io/badge/demo-schall.krisperapps.de-2ea44f)](https://schall.krisperapps.de/)
 ![Node.js 26](https://img.shields.io/badge/Node.js-26-5fa04e)
 ![Rust 2024](https://img.shields.io/badge/Rust-edition%202024-dea584)
 ![WebAssembly SIMD](https://img.shields.io/badge/DSP-Rust%20%E2%86%92%20WebAssembly%20SIMD-654ff0)
@@ -102,7 +102,7 @@ settings behind the buttons in the top bar. A tap enlarges any of them.
 
 ## Getting started
 
-1. Open **https://michaelkrisper.github.io/schall/** on your phone.
+1. Open **https://schall.krisperapps.de/** on your phone.
 2. Install it: on iPhone *Share → Add to Home Screen*, on Android *Install
    app* in the browser menu.
 3. Tap **Messung starten** and allow the microphone.
@@ -235,7 +235,7 @@ checked in, so Rust is only needed to change the core; CI rebuilds it from
 
 | Script | What it does |
 | --- | --- |
-| `npm run serve` | Local server with gzip, like GitHub Pages |
+| `npm run serve` | Local server with gzip, like the live site |
 | `npm run wasm` | Build `wasm/` and copy the module to `src/dsp.wasm` |
 | `npm run lint` / `lint:fix` | Biome: format and lint JavaScript, CSS, JSON |
 | `npm run lint:rust` | rustfmt and clippy (warnings are errors) |
@@ -247,7 +247,7 @@ checked in, so Rust is only needed to change the core; CI rebuilds it from
 | `npm run icons` | Render the PNG icons from `src/icons/icon.svg` |
 
 Every push and pull request runs rustfmt, clippy, Biome and all tests; every
-push to `main` then deploys to GitHub Pages; the smoke test afterwards checks the live
+push to `main` then deploys to <https://schall.krisperapps.de/>; the smoke test afterwards checks the live
 files ([deploy.yml](.github/workflows/deploy.yml)).
 Every merge to `main` is tagged with the next patch version; bundled releases
 with release notes come from the Release workflow (see

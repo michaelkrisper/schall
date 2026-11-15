@@ -4,7 +4,7 @@
 
 - The microphone signal is processed on the device only, inside the browser.
   Nothing is uploaded; the app has no backend and makes no requests other
-  than loading its own files from GitHub Pages.
+  than loading its own files from its own server.
 - Recordings are stored in the browser's IndexedDB on the device and leave
   it only when you download or share them.
 - Settings (weighting, calibration) are stored in `localStorage`.
