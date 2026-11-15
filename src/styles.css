@@ -1097,6 +1097,10 @@ button:disabled {
   color: var(--accent);
 }
 
+.about.legal {
+  margin-top: 4px !important;
+}
+
 /* Short screens (iPhone SE and the like): the history chart gives way to
    the spectrum; its header with duration and reset stays. */
 /* Very short screens: the history chart gives way to the spectrum; its
