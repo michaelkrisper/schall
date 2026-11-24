@@ -341,8 +341,8 @@ pub extern "C" fn setup(sample_rate: f64, fft_size: u32, hop: u32, report_sample
     let gain = n as f64 * BH[0];
     s.scale = (2.0 / (gain * gain)) as f32;
     let bits = m.trailing_zeros();
-    for i in 0..m {
-        s.bitrev[i] = if bits == 0 {
+    for (i, rev) in s.bitrev.iter_mut().enumerate().take(m) {
+        *rev = if bits == 0 {
             0
         } else {
             (i as u32).reverse_bits() >> (32 - bits)
